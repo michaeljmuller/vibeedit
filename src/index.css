@@ -1,0 +1,366 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f5f5f5;
+  color: #333;
+}
+
+.container {
+  max-width: 860px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 24px;
+  color: #111;
+}
+
+.editor-wrapper {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.menu-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 12px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #fafafa;
+}
+
+.menu-bar button {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  color: #444;
+  transition: background 0.15s, color 0.15s;
+}
+
+.menu-bar button:hover:not(:disabled) {
+  background: #e8e8e8;
+}
+
+.menu-bar button.active {
+  background: #333;
+  color: #fff;
+  border-color: #333;
+}
+
+.menu-bar button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.divider {
+  width: 1px;
+  background: #ddd;
+  margin: 4px 2px;
+}
+
+.editor-content {
+  padding: 24px;
+  min-height: 400px;
+}
+
+.editor-content .tiptap {
+  outline: none;
+  min-height: 360px;
+}
+
+.editor-content .tiptap p {
+  margin-bottom: 1em;
+  line-height: 1.7;
+}
+
+.editor-content .tiptap h1,
+.editor-content .tiptap h2,
+.editor-content .tiptap h3 {
+  margin: 1em 0 0.5em;
+  line-height: 1.3;
+}
+
+.editor-content .tiptap ul,
+.editor-content .tiptap ol {
+  padding-left: 1.5em;
+  margin-bottom: 1em;
+}
+
+.editor-content .tiptap blockquote {
+  border-left: 3px solid #ccc;
+  padding-left: 1em;
+  color: #666;
+  margin: 1em 0;
+}
+
+.editor-content .tiptap code {
+  background: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+.prompt-bar {
+  padding: 10px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.prompt-bar label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.prompt-bar textarea {
+  font-size: 13px;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px 8px;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.prompt-bar textarea:focus {
+  outline: none;
+  border-color: #4a90e2;
+}
+
+.translate-panel {
+  gap: 8px;
+}
+
+.translate-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.retranslate-btn {
+  font-size: 12px;
+  padding: 2px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  color: #555;
+}
+
+.retranslate-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.translate-status {
+  font-size: 13px;
+  color: #999;
+  font-style: italic;
+  margin: 0;
+}
+
+.translate-status.error {
+  color: #b91c1c;
+  font-style: normal;
+}
+
+.translate-output {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.translate-output p { margin: 0 0 0.5em; }
+.translate-output p:last-child { margin-bottom: 0; }
+
+.check-btn {
+  font-weight: 600;
+}
+
+.error-banner {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: #fff3f3;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  color: #b91c1c;
+  font-size: 13px;
+}
+
+.chat-panel {
+  margin-top: 16px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  max-height: 400px;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-empty {
+  color: #aaa;
+  font-size: 13px;
+  text-align: center;
+  margin: auto;
+}
+
+.chat-message {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 85%;
+}
+
+.chat-message--user {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.chat-message--assistant {
+  align-self: flex-start;
+}
+
+.chat-role {
+  font-size: 11px;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.chat-message--user p {
+  background: #333;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 12px 12px 2px 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.chat-message--assistant p {
+  background: #f0f0f0;
+  color: #333;
+  padding: 8px 12px;
+  border-radius: 12px 12px 12px 2px;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.chat-bubble {
+  background: #f0f0f0;
+  color: #333;
+  padding: 8px 12px;
+  border-radius: 12px 12px 12px 2px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.chat-bubble p { margin: 0 0 0.5em; }
+.chat-bubble p:last-child { margin-bottom: 0; }
+.chat-bubble ul, .chat-bubble ol { padding-left: 1.4em; margin: 0.4em 0; }
+.chat-bubble li { margin-bottom: 0.2em; }
+.chat-bubble code { background: #e0e0e0; padding: 1px 5px; border-radius: 3px; font-family: monospace; font-size: 13px; }
+.chat-bubble pre { background: #e0e0e0; padding: 8px; border-radius: 4px; overflow-x: auto; margin: 0.4em 0; }
+.chat-bubble pre code { background: none; padding: 0; }
+.chat-bubble strong { font-weight: 600; }
+.chat-bubble h1, .chat-bubble h2, .chat-bubble h3 { margin: 0.5em 0 0.25em; line-height: 1.3; }
+
+.chat-thinking {
+  color: #999 !important;
+  font-style: italic;
+}
+
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid #eee;
+}
+
+.chat-input-row input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.chat-input-row input:focus {
+  outline: none;
+  border-color: #4a90e2;
+}
+
+.chat-input-row button {
+  padding: 8px 16px;
+  background: #333;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.chat-input-row button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.foo-highlight {
+  text-decoration: underline wavy blue;
+  cursor: default;
+}
+
+.error-tooltip {
+  position: absolute;
+  max-width: 280px;
+  background: #1e1e2e;
+  color: #e0e0e0;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 10px 14px;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  border-left: 3px solid #4a90e2;
+  pointer-events: auto;
+  z-index: 100;
+}
+
+.editor-content .tiptap pre {
+  background: #f0f0f0;
+  padding: 12px;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin-bottom: 1em;
+}
