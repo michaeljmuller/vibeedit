@@ -37,7 +37,6 @@ cp <italian-path>/Body.data <project-dir>/data/italian-english-dictionary.data
 docker compose build \
   --build-arg ANTHROPIC_API_KEY=<your-anthropic-key> \
   --build-arg OPENAI_API_KEY=<your-openai-key>
-
 docker compose up
 ```
 
