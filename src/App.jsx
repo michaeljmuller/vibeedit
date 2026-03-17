@@ -4,6 +4,7 @@ import StarterKit from '@tiptap/starter-kit'
 import { FooHighlight } from './FooHighlight'
 import ChatPanel from './ChatPanel'
 import ConjugatePanel from './ConjugatePanel'
+import DictionaryPanel from './DictionaryPanel'
 
 const DEFAULT_PROMPT = 'Review the text for grammatical errors, unclear phrasing, and style issues. Flag specific problems with suggested corrections.'
 
@@ -22,6 +23,7 @@ const MenuBar = ({ editor, onCheck, checking, activePanel, onPanelToggle }) => {
       <button onClick={() => onPanelToggle('prompt')} className={activePanel === 'prompt' ? 'active' : ''}>Prompt</button>
       <button onClick={() => onPanelToggle('translate')} className={activePanel === 'translate' ? 'active' : ''}>Translate</button>
       <button onClick={() => onPanelToggle('conjugate')} className={activePanel === 'conjugate' ? 'active' : ''}>Conjugate</button>
+      <button onClick={() => onPanelToggle('dictionary')} className={activePanel === 'dictionary' ? 'active' : ''}>Dictionary</button>
     </div>
   )
 }
@@ -74,6 +76,7 @@ export default function App() {
   const [activePanel, setActivePanel] = useState(null)
   const [chatHistory, setChatHistory] = useState([])
   const [conjugateState, setConjugateState] = useState({ verb: '', sections: null, error: null })
+  const [dictState, setDictState] = useState({ word: '', dir: 'ptToEn', results: null, error: null, loading: false })
   const hideTimer = useRef(null)
   const saveTimer = useRef(null)
 
@@ -171,6 +174,7 @@ export default function App() {
           <TranslatePanel getEditorHtml={() => editor.getHTML()} />
         )}
         {activePanel === 'conjugate' && <ConjugatePanel state={conjugateState} setState={setConjugateState} />}
+        {activePanel === 'dictionary' && <DictionaryPanel state={dictState} setState={setDictState} />}
         <div onMouseOver={handleMouseOver} onMouseOut={handleMouseOut} spellCheck={false} autoCorrect="off" autoCapitalize="off">
           <EditorContent editor={editor} className="editor-content" />
         </div>

@@ -3,9 +3,10 @@ import Anthropic from '@anthropic-ai/sdk'
 import { readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
-import { scrape as scrapePt } from './languages/pt.js'
+import { scrape as scrapePt, lookup as lookupPt } from './languages/pt.js'
 
 const languageScrapers = { pt: scrapePt }
+const languageLookup = { pt: lookupPt }
 
 // Load API key from .apikey file if not in environment
 if (!process.env.ANTHROPIC_API_KEY) {
@@ -123,6 +124,20 @@ app.post('/api/conjugate', async (req, res) => {
   try {
     const sections = await scraper(verb)
     res.json({ sections })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.post('/api/dictionary', async (req, res) => {
+  const { word, dir = 'ptToEn', lang = 'pt' } = req.body
+  if (!word) return res.status(400).json({ error: 'No word provided' })
+  const lookup = languageLookup[lang]
+  if (!lookup) return res.status(400).json({ error: `Unsupported language: ${lang}` })
+  try {
+    const results = await lookup(word, dir)
+    res.json({ results })
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: err.message })
