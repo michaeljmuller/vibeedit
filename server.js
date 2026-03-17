@@ -3,6 +3,9 @@ import Anthropic from '@anthropic-ai/sdk'
 import { readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
+import { scrape as scrapePt } from './languages/pt.js'
+
+const languageScrapers = { pt: scrapePt }
 
 // Load API key from .apikey file if not in environment
 if (!process.env.ANTHROPIC_API_KEY) {
@@ -106,6 +109,20 @@ app.post('/api/chat', async (req, res) => {
       messages,
     })
     res.json({ response: response.content[0].text })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.post('/api/conjugate', async (req, res) => {
+  const { verb, lang = 'pt' } = req.body
+  if (!verb) return res.status(400).json({ error: 'No verb provided' })
+  const scraper = languageScrapers[lang]
+  if (!scraper) return res.status(400).json({ error: `Unsupported language: ${lang}` })
+  try {
+    const sections = await scraper(verb)
+    res.json({ sections })
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: err.message })

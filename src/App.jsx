@@ -3,6 +3,7 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { FooHighlight } from './FooHighlight'
 import ChatPanel from './ChatPanel'
+import ConjugatePanel from './ConjugatePanel'
 
 const DEFAULT_PROMPT = 'Review the text for grammatical errors, unclear phrasing, and style issues. Flag specific problems with suggested corrections.'
 
@@ -20,6 +21,7 @@ const MenuBar = ({ editor, onCheck, checking, activePanel, onPanelToggle }) => {
       <button onClick={() => onPanelToggle('chat')} className={activePanel === 'chat' ? 'active' : ''}>Chat</button>
       <button onClick={() => onPanelToggle('prompt')} className={activePanel === 'prompt' ? 'active' : ''}>Prompt</button>
       <button onClick={() => onPanelToggle('translate')} className={activePanel === 'translate' ? 'active' : ''}>Translate</button>
+      <button onClick={() => onPanelToggle('conjugate')} className={activePanel === 'conjugate' ? 'active' : ''}>Conjugate</button>
     </div>
   )
 }
@@ -71,6 +73,7 @@ export default function App() {
   const [tooltip, setTooltip] = useState(null)
   const [activePanel, setActivePanel] = useState(null)
   const [chatHistory, setChatHistory] = useState([])
+  const [conjugateState, setConjugateState] = useState({ verb: '', sections: null, error: null })
   const hideTimer = useRef(null)
   const saveTimer = useRef(null)
 
@@ -167,6 +170,7 @@ export default function App() {
         {activePanel === 'translate' && (
           <TranslatePanel getEditorHtml={() => editor.getHTML()} />
         )}
+        {activePanel === 'conjugate' && <ConjugatePanel state={conjugateState} setState={setConjugateState} />}
         <div onMouseOver={handleMouseOver} onMouseOut={handleMouseOut} spellCheck={false} autoCorrect="off" autoCapitalize="off">
           <EditorContent editor={editor} className="editor-content" />
         </div>

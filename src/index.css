@@ -193,6 +193,105 @@ h1 {
 .translate-output p { margin: 0 0 0.5em; }
 .translate-output p:last-child { margin-bottom: 0; }
 
+.conjugate-panel {
+  gap: 10px;
+}
+
+.conjugate-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.conjugate-input-row input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.conjugate-input-row input:focus {
+  outline: none;
+  border-color: #4a90e2;
+}
+
+.conjugate-input-row button {
+  padding: 6px 14px;
+  background: #333;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.conjugate-input-row button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.conj-output {
+  overflow-x: auto;
+}
+
+.conj-section {
+  margin-bottom: 16px;
+}
+
+.conj-heading {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #555;
+  margin: 0 0 8px;
+}
+
+.conj-tenses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.conj-table {
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.conj-table caption {
+  font-weight: 600;
+  text-align: left;
+  padding: 0 0 4px;
+  font-size: 12px;
+  color: #444;
+}
+
+.conj-cell {
+  padding: 2px 8px;
+  border: 1px solid #e0e0e0;
+  white-space: nowrap;
+}
+
+.conj-pronoun {
+  color: #888;
+  font-size: 12px;
+  margin-right: 2px;
+}
+
+.conj-suffix {
+  font-weight: 700;
+}
+
+.conj-append {
+  font-style: italic;
+}
+
+.conj-irregular {
+  font-weight: 700;
+  font-style: italic;
+}
+
 .check-btn {
   font-weight: 600;
 }
