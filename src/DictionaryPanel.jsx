@@ -68,6 +68,7 @@ export default function DictionaryPanel({ state, setState }) {
           onChange={e => setInput(e.target.value)}
           placeholder="Word…"
           autoFocus
+          onFocus={e => e.target.select()}
         />
         <button type="submit" disabled={loading}>Look up</button>
       </form>
