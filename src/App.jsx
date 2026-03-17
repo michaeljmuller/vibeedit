@@ -48,7 +48,7 @@ const MenuBar = ({ editor, onCheck, checking, activePanel, onPanelToggle, ctrlHe
 
 const VOICES = ['alloy', 'ash', 'ballad', 'cedar', 'echo', 'fable', 'onyx', 'nova', 'sage', 'shimmer', 'verse']
 
-function SpeakPanel({ getEditorText }) {
+function SpeakPanel({ getEditorText, active }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [audioUrl, setAudioUrl] = useState(null)
@@ -88,7 +88,13 @@ function SpeakPanel({ getEditorText }) {
     }
   }
 
-  useEffect(() => { generate() }, [])
+  const hasActivated = useRef(false)
+  useEffect(() => {
+    if (active && !hasActivated.current) {
+      hasActivated.current = true
+      generate()
+    }
+  }, [active])
   useEffect(() => () => { if (audioUrl) URL.revokeObjectURL(audioUrl) }, [audioUrl])
 
   const togglePlay = () => {
@@ -106,7 +112,7 @@ function SpeakPanel({ getEditorText }) {
   const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 
   return (
-    <div className="prompt-bar speak-panel">
+    <div className="panel-bar speak-panel">
       <div className="speak-header">
         <label>Text to Speech</label>
         <div className="speak-header-controls">
@@ -150,8 +156,12 @@ function TranslatePanel({ getEditorHtml }) {
   const [translation, setTranslation] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const lastTranslatedHtml = useRef(null)
 
-  const run = async () => {
+  const run = async (force = false) => {
+    const html = getEditorHtml()
+    if (!force && html === lastTranslatedHtml.current) return
+    lastTranslatedHtml.current = html
     setTranslation(null)
     setLoading(true)
     setError(null)
@@ -159,7 +169,7 @@ function TranslatePanel({ getEditorHtml }) {
       const res = await fetch('/api/translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: getEditorHtml() }),
+        body: JSON.stringify({ text: html }),
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
@@ -174,10 +184,10 @@ function TranslatePanel({ getEditorHtml }) {
   useEffect(() => { run() }, [])
 
   return (
-    <div className="prompt-bar translate-panel">
+    <div className="panel-bar translate-panel">
       <div className="translate-header">
         <label>English translation</label>
-        <button className="retranslate-btn" onClick={run} disabled={loading}>↺ Re-translate</button>
+        <button className="retranslate-btn" onClick={() => run(true)} disabled={loading}>↺ Re-translate</button>
       </div>
       {loading && <p className="translate-status">Translating…</p>}
       {error && <p className="translate-status error">{error}</p>}
@@ -196,8 +206,47 @@ export default function App() {
   const [conjugateState, setConjugateState] = useState({ verb: '', sections: null, error: null })
   const [dictState, setDictState] = useState({ word: '', results: null, error: null, loading: false })
   const [ctrlHeld, setCtrlHeld] = useState(false)
+  const [panelHeight, setPanelHeight] = useState(() => Number(localStorage.getItem('vibeedit-panel-height')) || 220)
   const hideTimer = useRef(null)
   const saveTimer = useRef(null)
+  const dragState = useRef(null)
+  const panelContentRef = useRef(null)
+
+  useEffect(() => {
+    if (!panelContentRef.current) return
+    const ro = new ResizeObserver(entries => {
+      if (dragState.current) return
+      const contentHeight = entries[0].contentRect.height
+      if (contentHeight === 0) return
+      setPanelHeight(Math.min(contentHeight, window.innerHeight / 2))
+    })
+    ro.observe(panelContentRef.current)
+    return () => ro.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const onMouseMove = (e) => {
+      if (!dragState.current) return
+      const delta = e.clientY - dragState.current.startY
+      const next = Math.max(80, Math.min(600, dragState.current.startHeight + delta))
+      setPanelHeight(next)
+    }
+    const onMouseUp = (e) => {
+      if (!dragState.current) return
+      const delta = e.clientY - dragState.current.startY
+      const final = Math.max(80, Math.min(600, dragState.current.startHeight + delta))
+      localStorage.setItem('vibeedit-panel-height', String(Math.round(final)))
+      dragState.current = null
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+    }
+  }, [])
 
   const editor = useEditor({
     autofocus: true,
@@ -316,34 +365,51 @@ export default function App() {
           onPanelToggle={handlePanelToggle}
           ctrlHeld={ctrlHeld}
         />
-        {activePanel === 'prompt' && (
-          <div className="prompt-bar">
-            <label htmlFor="prompt">Review prompt</label>
-            <textarea
-              id="prompt"
-              value={prompt}
-              onChange={handlePromptChange}
-              rows={8}
-              autoFocus
-            />
+        <div
+          className="panel-container"
+          style={{ display: activePanel && activePanel !== 'check' ? undefined : 'none', height: panelHeight }}
+        >
+          <div ref={panelContentRef}>
+          {activePanel === 'prompt' && (
+            <div className="panel-bar" style={{ height: panelHeight }}>
+              <label htmlFor="prompt">Review prompt</label>
+              <textarea
+                id="prompt"
+                value={prompt}
+                onChange={handlePromptChange}
+                autoFocus
+              />
+            </div>
+          )}
+          {activePanel === 'translate' && (
+            <TranslatePanel getEditorHtml={() => editor.getHTML()} />
+          )}
+          {activePanel === 'conjugate' && <ConjugatePanel state={conjugateState} setState={setConjugateState} />}
+          {activePanel === 'dictionary' && <DictionaryPanel state={dictState} setState={setDictState} />}
+          <div style={{ display: activePanel === 'speak' ? undefined : 'none' }}>
+            <SpeakPanel getEditorText={() => editor.getText()} active={activePanel === 'speak'} />
           </div>
-        )}
-        {activePanel === 'translate' && (
-          <TranslatePanel getEditorHtml={() => editor.getHTML()} />
-        )}
-        {activePanel === 'conjugate' && <ConjugatePanel state={conjugateState} setState={setConjugateState} />}
-        {activePanel === 'dictionary' && <DictionaryPanel state={dictState} setState={setDictState} />}
-        <div style={{ display: activePanel === 'speak' ? undefined : 'none' }}>
-          <SpeakPanel getEditorText={() => editor.getText()} />
+          <div style={{ display: activePanel === 'chat' ? undefined : 'none' }}>
+            <ChatPanel getEditorText={() => editor.getText()} history={chatHistory} setHistory={setChatHistory} active={activePanel === 'chat'} />
+          </div>
+          </div>
         </div>
-        <div onMouseOver={handleMouseOver} onMouseOut={handleMouseOut} spellCheck={false} autoCorrect="off" autoCapitalize="off">
+        {activePanel && activePanel !== 'check' && (
+          <div
+            className="resize-handle"
+            onMouseDown={(e) => {
+              dragState.current = { startY: e.clientY, startHeight: panelHeight }
+              document.body.style.cursor = 'row-resize'
+              document.body.style.userSelect = 'none'
+              e.preventDefault()
+            }}
+          />
+        )}
+        <div className="editor-area" onMouseOver={handleMouseOver} onMouseOut={handleMouseOut} spellCheck={false} autoCorrect="off" autoCapitalize="off">
           <EditorContent editor={editor} className="editor-content" />
         </div>
       </div>
       {error && <div className="error-banner">{error}</div>}
-      {activePanel === 'chat' && (
-        <ChatPanel getEditorText={() => editor.getText()} history={chatHistory} setHistory={setChatHistory} />
-      )}
       {tooltip && (
         <div
           className="error-tooltip"

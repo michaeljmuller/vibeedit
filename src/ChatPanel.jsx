@@ -1,15 +1,20 @@
 import { useState, useRef, useEffect } from 'react'
 import Markdown from 'react-markdown'
 
-export default function ChatPanel({ getEditorText, history, setHistory }) {
+export default function ChatPanel({ getEditorText, history, setHistory, active }) {
   const [question, setQuestion] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const bottomRef = useRef(null)
+  const inputRef = useRef(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [history, loading])
+
+  useEffect(() => {
+    if (active) inputRef.current?.focus()
+  }, [active])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -44,7 +49,7 @@ export default function ChatPanel({ getEditorText, history, setHistory }) {
   }
 
   return (
-    <div className="chat-panel">
+    <div className="panel-bar chat-panel">
       <div className="chat-messages">
         {history.length === 0 && (
           <p className="chat-empty">Ask a question about your document…</p>
@@ -69,6 +74,7 @@ export default function ChatPanel({ getEditorText, history, setHistory }) {
       </div>
       <form className="chat-input-row" onSubmit={handleSubmit}>
         <input
+          ref={inputRef}
           type="text"
           value={question}
           onChange={e => setQuestion(e.target.value)}
@@ -76,7 +82,6 @@ export default function ChatPanel({ getEditorText, history, setHistory }) {
           disabled={loading}
           autoComplete="off"
           spellCheck={false}
-          autoFocus
         />
         <button type="submit" disabled={loading || !question.trim()}>Send</button>
       </form>

@@ -60,7 +60,7 @@ export default function DictionaryPanel({ state, setState }) {
   }
 
   return (
-    <div className="prompt-bar dict-panel">
+    <div className="panel-bar dict-panel">
       <label>Dictionary</label>
       <form className="dict-input-row" onSubmit={handleSubmit}>
         <input

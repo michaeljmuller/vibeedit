@@ -33,7 +33,7 @@ export default function ConjugatePanel({ state, setState }) {
   }
 
   return (
-    <div className="prompt-bar conjugate-panel">
+    <div className="panel-bar conjugate-panel">
       <form className="conjugate-input-row" onSubmit={handleSubmit}>
         <input
           type="text"

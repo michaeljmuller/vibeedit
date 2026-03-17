@@ -13,6 +13,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json .
 COPY --from=builder /app/server.js .
 COPY --from=builder /app/languages ./languages
+COPY --from=builder /app/data ./data
 COPY --from=builder /app/.apikey .
 
 EXPOSE 3000
