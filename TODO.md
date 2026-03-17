@@ -4,4 +4,6 @@
  - make sure everything is self-contained; add dictionaries to project
  - enhance dictionary to show idioms
  - enhance dictionary to show entries where the search term is part of the entry name (house -> house call, house guest, house-hunt, etc.)
- 
+ - bug: dictionary feature only finds first definition.  Cow, for example, has a noun entry and a transitive verb entry.
+ - bug: noun genders aren't being displayed
+ - copy to clipboard feature! 
