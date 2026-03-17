@@ -54,8 +54,8 @@ function scrapeConjugations($) {
 
 function findAppleDictPath() {
   // Check project-local copy first
-  const local = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'portuguese-english-dictionary')
-  if (existsSync(join(local, 'Body.data'))) return local
+  const local = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'portuguese-english-dictionary.data')
+  if (existsSync(local)) return local
 
   // Fall back to macOS system location
   const base = '/System/Library/AssetsV2/com_apple_MobileAsset_DictionaryServices_dictionaryOSX'
@@ -78,7 +78,7 @@ function initAppleDict() {
   if (_enBlocks !== null) return
   if (!APPLE_DICT_PATH) { _enBlocks = []; _ptBlocks = []; return }
 
-  _bodyData = readFileSync(join(APPLE_DICT_PATH, 'Body.data'))
+  _bodyData = readFileSync(APPLE_DICT_PATH)
   const en = [], pt = []
 
   for (let i = 0; i < _bodyData.length - 1; i++) {
