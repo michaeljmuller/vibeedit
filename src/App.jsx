@@ -17,6 +17,7 @@ const PANELS = [
   { id: 'translate',  label: 'Translate' },
   { id: 'conjugate',  label: 'Conjugate' },
   { id: 'dictionary', label: 'Dictionary' },
+  { id: 'speak',      label: 'Speak' },
 ]
 
 const MenuBar = ({ editor, onCheck, checking, activePanel, onPanelToggle, ctrlHeld }) => {
@@ -41,6 +42,106 @@ const MenuBar = ({ editor, onCheck, checking, activePanel, onPanelToggle, ctrlHe
           {label(i + 1, p.label)}
         </button>
       ))}
+    </div>
+  )
+}
+
+const VOICES = ['alloy', 'ash', 'ballad', 'cedar', 'echo', 'fable', 'onyx', 'nova', 'sage', 'shimmer', 'verse']
+
+function SpeakPanel({ getEditorText }) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [audioUrl, setAudioUrl] = useState(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [voice, setVoice] = useState(() => localStorage.getItem('vibeedit-voice') ?? 'cedar')
+  const audioRef = useRef(null)
+
+  const handleVoiceChange = (e) => {
+    setVoice(e.target.value)
+    localStorage.setItem('vibeedit-voice', e.target.value)
+  }
+
+  const generate = async () => {
+    setLoading(true)
+    setError(null)
+    setAudioUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null })
+    setCurrentTime(0)
+    setDuration(0)
+    try {
+      const res = await fetch('/api/speak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: getEditorText(), voice }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error)
+      }
+      const blob = await res.blob()
+      setAudioUrl(URL.createObjectURL(blob))
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { generate() }, [])
+  useEffect(() => () => { if (audioUrl) URL.revokeObjectURL(audioUrl) }, [audioUrl])
+
+  const togglePlay = () => {
+    const a = audioRef.current
+    if (!a) return
+    isPlaying ? a.pause() : a.play()
+  }
+
+  const skip = (secs) => {
+    const a = audioRef.current
+    if (!a) return
+    a.currentTime = Math.max(0, Math.min(a.duration, a.currentTime + secs))
+  }
+
+  const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
+
+  return (
+    <div className="prompt-bar speak-panel">
+      <div className="speak-header">
+        <label>Text to Speech</label>
+        <div className="speak-header-controls">
+          <select className="voice-picker" value={voice} onChange={handleVoiceChange} disabled={loading}>
+            {VOICES.map(v => <option key={v} value={v}>{v}</option>)}
+          </select>
+          <button className="regen-btn" onClick={generate} disabled={loading}>↺ Re-generate</button>
+        </div>
+      </div>
+      {loading && <p className="speak-status">Generating audio…</p>}
+      {error && <p className="speak-status error">{error}</p>}
+      {audioUrl && (
+        <>
+          <audio
+            ref={audioRef}
+            src={audioUrl}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            onEnded={() => setIsPlaying(false)}
+            onTimeUpdate={e => setCurrentTime(e.target.currentTime)}
+            onLoadedMetadata={e => { setDuration(e.target.duration); e.target.play() }}
+          />
+          <div className="speak-controls">
+            <button className="speak-skip" onClick={() => skip(-10)}>«10s</button>
+            <button className="speak-playpause" onClick={togglePlay}>{isPlaying ? '⏸' : '▶'}</button>
+            <button className="speak-skip" onClick={() => skip(10)}>10s»</button>
+            <input
+              type="range" className="speak-progress"
+              min={0} max={duration || 0} step={0.1} value={currentTime}
+              onChange={e => { audioRef.current.currentTime = e.target.value }}
+            />
+            <span className="speak-time">{fmt(currentTime)} / {fmt(duration)}</span>
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -232,6 +333,9 @@ export default function App() {
         )}
         {activePanel === 'conjugate' && <ConjugatePanel state={conjugateState} setState={setConjugateState} />}
         {activePanel === 'dictionary' && <DictionaryPanel state={dictState} setState={setDictState} />}
+        <div style={{ display: activePanel === 'speak' ? undefined : 'none' }}>
+          <SpeakPanel getEditorText={() => editor.getText()} />
+        </div>
         <div onMouseOver={handleMouseOver} onMouseOut={handleMouseOut} spellCheck={false} autoCorrect="off" autoCapitalize="off">
           <EditorContent editor={editor} className="editor-content" />
         </div>

@@ -8,12 +8,18 @@ import { scrape as scrapePt, lookup as lookupPt } from './languages/pt.js'
 const languageScrapers = { pt: scrapePt }
 const languageLookup = { pt: lookupPt }
 
-// Load API key from .apikey file if not in environment
-if (!process.env.ANTHROPIC_API_KEY) {
+// Load API keys from .apikey file if not in environment
+if (!process.env.ANTHROPIC_API_KEY || !process.env.OPENAI_API_KEY) {
   try {
     const content = readFileSync('.apikey', 'utf8')
-    const match = content.match(/ANTHROPIC_API_KEY=(.+)/)
-    if (match) process.env.ANTHROPIC_API_KEY = match[1].trim()
+    if (!process.env.ANTHROPIC_API_KEY) {
+      const match = content.match(/ANTHROPIC_API_KEY=(.+)/)
+      if (match) process.env.ANTHROPIC_API_KEY = match[1].trim()
+    }
+    if (!process.env.OPENAI_API_KEY) {
+      const match = content.match(/OPENAI_API_KEY=(.+)/)
+      if (match) process.env.OPENAI_API_KEY = match[1].trim()
+    }
   } catch {}
 }
 
@@ -138,6 +144,31 @@ app.post('/api/dictionary', async (req, res) => {
   try {
     const results = lookup(word)
     res.json({ results })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.post('/api/speak', async (req, res) => {
+  const { text, voice = 'nova' } = req.body
+  if (!text) return res.status(400).json({ error: 'No text provided' })
+  try {
+    const response = await fetch('https://api.openai.com/v1/audio/speech', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ model: 'gpt-4o-mini-tts', input: text, voice }),
+    })
+    if (!response.ok) {
+      const err = await response.json()
+      return res.status(response.status).json({ error: err.error?.message ?? 'TTS failed' })
+    }
+    res.setHeader('Content-Type', 'audio/mpeg')
+    const buf = await response.arrayBuffer()
+    res.send(Buffer.from(buf))
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: err.message })
