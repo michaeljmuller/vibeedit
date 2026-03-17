@@ -76,7 +76,7 @@ export default function App() {
   const [activePanel, setActivePanel] = useState(null)
   const [chatHistory, setChatHistory] = useState([])
   const [conjugateState, setConjugateState] = useState({ verb: '', sections: null, error: null })
-  const [dictState, setDictState] = useState({ word: '', dir: 'ptToEn', results: null, error: null, loading: false })
+  const [dictState, setDictState] = useState({ word: '', results: null, error: null, loading: false })
   const hideTimer = useRef(null)
   const saveTimer = useRef(null)
 

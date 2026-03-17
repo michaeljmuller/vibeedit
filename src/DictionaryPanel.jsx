@@ -1,16 +1,50 @@
 import { useState } from 'react'
 
+function DictResult({ result }) {
+  return (
+    <div className="dict-result">
+      <div className="dict-result-header">
+        <span className="dict-result-word">{result.word}</span>
+      </div>
+      {result.sections.map((sec, si) => (
+        <div key={si} className="dict-section">
+          {sec.pos && <span className="dict-result-pos">{sec.pos}</span>}
+          <ol className="dict-senses">
+            {sec.senses.map((s, i) => (
+              <li key={i} className="dict-sense">
+                {s.context && <span className="dict-context">({s.context}) </span>}
+                <span className="dict-trans">{s.trans}</span>
+                {s.examples.length > 0 && (
+                  <ul className="dict-examples">
+                    {s.examples.map((ex, j) => (
+                      <li key={j} className="dict-example">
+                        <span className="dict-ex-src">{ex.src}</span>
+                        <span className="dict-ex-sep"> ▸ </span>
+                        <span className="dict-ex-tgt">{ex.tgt}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ol>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function DictionaryPanel({ state, setState }) {
-  const { word, dir, results, error, loading } = state
+  const { word, results, error, loading } = state
   const [input, setInput] = useState(word || '')
 
-  const lookup = async (w, d) => {
-    setState(s => ({ ...s, loading: true, error: null, results: null, word: w, dir: d }))
+  const lookup = async (w) => {
+    setState(s => ({ ...s, loading: true, error: null, results: null, word: w }))
     try {
       const res = await fetch('/api/dictionary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ word: w, dir: d, lang: 'pt' }),
+        body: JSON.stringify({ word: w, lang: 'pt' }),
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
@@ -22,67 +56,26 @@ export default function DictionaryPanel({ state, setState }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (input.trim()) lookup(input.trim(), dir || 'ptToEn')
+    if (input.trim()) lookup(input.trim())
   }
-
-  const handleDirToggle = (newDir) => {
-    setState(s => ({ ...s, dir: newDir }))
-    if (word) lookup(word, newDir)
-  }
-
-  const handleResultClick = (w) => {
-    const newDir = dir === 'ptToEn' ? 'enToPt' : 'ptToEn'
-    setInput(w)
-    lookup(w, newDir)
-  }
-
-  const currentDir = dir || 'ptToEn'
 
   return (
     <div className="prompt-bar dict-panel">
-      <div className="dict-header">
-        <label>Dictionary</label>
-        <div className="dict-dir-toggle">
-          <button
-            className={currentDir === 'ptToEn' ? 'active' : ''}
-            onClick={() => handleDirToggle('ptToEn')}
-          >PT → EN</button>
-          <button
-            className={currentDir === 'enToPt' ? 'active' : ''}
-            onClick={() => handleDirToggle('enToPt')}
-          >EN → PT</button>
-        </div>
-      </div>
+      <label>Dictionary</label>
       <form className="dict-input-row" onSubmit={handleSubmit}>
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
-          placeholder={currentDir === 'ptToEn' ? 'Portuguese word…' : 'English word…'}
+          placeholder="Word…"
           autoFocus
         />
         <button type="submit" disabled={loading}>Look up</button>
       </form>
       {loading && <p className="dict-status">Looking up…</p>}
       {error && <p className="dict-status dict-error">{error}</p>}
-      {results && results.length === 0 && <p className="dict-status">No results found.</p>}
-      {results && results.length > 0 && (
-        <div className="dict-results">
-          {results.map((r, i) => {
-            const clickWord = currentDir === 'ptToEn' ? r.en : r.pt
-            const mainWord = currentDir === 'ptToEn' ? r.pt : r.en
-            return (
-              <div key={i} className="dict-row">
-                <span className="dict-main">{mainWord}</span>
-                {r.gender && <span className="dict-gender">{r.gender}</span>}
-                {r.variant === 'br' && <span className="dict-badge dict-badge--br">BR</span>}
-                {r.variant === 'pt' && <span className="dict-badge dict-badge--pt">PT</span>}
-                <span className="dict-arrow">→</span>
-                <button className="dict-result-btn" onClick={() => handleResultClick(clickWord)}>
-                  {clickWord}
-                </button>
-              </div>
-            )
-          })}
+      {results && (
+        <div className="dict-results-list">
+          {results.map((r, i) => <DictResult key={i} result={r} />)}
         </div>
       )}
     </div>

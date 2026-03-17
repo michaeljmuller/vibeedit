@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "setup": "node scripts/setup-dictionaries.js",
     "dev": "vite",
     "build": "vite build",
     "start": "node server.js"

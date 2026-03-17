@@ -136,7 +136,7 @@ app.post('/api/dictionary', async (req, res) => {
   const lookup = languageLookup[lang]
   if (!lookup) return res.status(400).json({ error: `Unsupported language: ${lang}` })
   try {
-    const results = await lookup(word, dir)
+    const results = lookup(word)
     res.json({ results })
   } catch (err) {
     console.error(err)

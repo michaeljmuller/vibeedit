@@ -1,4 +1,8 @@
 import * as cheerio from 'cheerio'
+import { readFileSync, readdirSync, existsSync } from 'fs'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
+import { inflateSync } from 'zlib'
 
 function parseCell($, td) {
   const pronoun = $(td).find('i').text().trim()
@@ -46,50 +50,123 @@ function scrapeConjugations($) {
   return sections
 }
 
-function parseDictCcRows($, word, dir) {
-  const q = word.trim().toLowerCase()
-  const results = []
-  $('tr[id^="tr"]').each(function () {
-    const tds = $(this).find('td.td7nl')
-    if (tds.length < 2) return
-    const ptTd = $(tds[0])
-    const enTd = $(tds[1])
+// ── Apple Dictionary ──────────────────────────────────────────────────────────
 
-    // Extract plain word text (exclude kbd/var/dfn)
-    const ptClone = ptTd.clone()
-    ptClone.find('kbd, var, dfn, div').remove()
-    const pt = ptClone.text().trim()
+function findAppleDictPath() {
+  // Check project-local copy first
+  const local = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'portuguese-english-dictionary')
+  if (existsSync(join(local, 'Body.data'))) return local
 
-    const enClone = enTd.clone()
-    enClone.find('kbd, var, dfn, div').remove()
-    const en = enClone.text().trim()
-
-    if (!pt || !en) return
-
-    const kbdText = ptTd.find('kbd').text()
-    let variant = null
-    if (kbdText.includes('Bras.')) variant = 'br'
-    else if (kbdText.includes('Port.')) variant = 'pt'
-
-    const gender = ptTd.find('var').text().replace(/[{}]/g, '').trim() || null
-
-    const matched = dir === 'enToPt'
-      ? en.toLowerCase().includes(q)
-      : pt.toLowerCase().includes(q)
-
-    if (matched) results.push({ pt, en, variant, gender })
-  })
-  return results
+  // Fall back to macOS system location
+  const base = '/System/Library/AssetsV2/com_apple_MobileAsset_DictionaryServices_dictionaryOSX'
+  try {
+    for (const dir of readdirSync(base)) {
+      const p = join(base, dir, 'AssetData', 'Portuguese - English.dictionary', 'Contents', 'Resources')
+      if (existsSync(join(p, 'Body.data'))) return p
+    }
+  } catch {}
+  return null
 }
 
-export async function lookup(word, dir) {
-  const url = `https://pten.dict.cc/?s=${encodeURIComponent(word.trim())}`
-  const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } })
-  if (!response.ok) throw new Error(`dict.cc fetch failed: ${response.status}`)
-  const html = await response.text()
-  const $ = cheerio.load(html)
-  const results = parseDictCcRows($, word, dir)
-  if (!results.length) throw new Error('No results found')
+const APPLE_DICT_PATH = findAppleDictPath()
+
+let _bodyData = null
+let _enBlocks = null
+let _ptBlocks = null
+
+function initAppleDict() {
+  if (_enBlocks !== null) return
+  if (!APPLE_DICT_PATH) { _enBlocks = []; _ptBlocks = []; return }
+
+  _bodyData = readFileSync(join(APPLE_DICT_PATH, 'Body.data'))
+  const en = [], pt = []
+
+  for (let i = 0; i < _bodyData.length - 1; i++) {
+    if (_bodyData[i] !== 0x78 || _bodyData[i + 1] !== 0xda) continue
+    try {
+      const raw = inflateSync(_bodyData.subarray(i)).toString('utf8')
+      if (!raw.includes('d:entry')) continue
+      const titles = [...raw.matchAll(/d:title="([^"]+)"/g)].map(m => m[1])
+      if (!titles.length) continue
+      const idMatch = raw.match(/id="([^"]+)"/)
+      const block = { offset: i, first: titles[0], last: titles.at(-1) }
+      idMatch?.[1].includes('pt-en') ? pt.push(block) : en.push(block)
+    } catch {}
+  }
+
+  _enBlocks = en
+  _ptBlocks = pt
+}
+
+function binarySearchBlock(blocks, word) {
+  const w = word.toLowerCase()
+  let lo = 0, hi = blocks.length - 1
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi + 1) / 2)
+    if (blocks[mid].first.toLowerCase() <= w) lo = mid
+    else hi = mid - 1
+  }
+  // Return the block and its neighbour in case of boundary
+  return [blocks[lo], blocks[lo + 1]].filter(Boolean)
+}
+
+function parseAppleEntry(xml, word) {
+  const $ = cheerio.load(xml, { xmlMode: false })
+  const sections = []
+
+  // Each gramb block is a POS section (noun, verb, etc.)
+  const grambs = $('[class~="gramb"][class~="x_xd0"]')
+  const targets = grambs.length ? grambs : $('body')
+
+  targets.each((gi, gEl) => {
+    const $g = $(gEl)
+    const pos = $g.find('[class~="ps"]').first().clone().find('*').remove().end().text().trim()
+    const senses = []
+
+    $g.find('[class~="semb"][class~="x_xd1"]').each((i, el) => {
+      const $el = $(el)
+      const num = $el.children('[class~="sn"]').first().text().trim().replace(/\s/g, '') || String(i + 1)
+      const context = $el.find('[class~="ind"]').first().text().replace(/[()]/g, '').trim()
+      const trans = $el.find('[class~="trans"]')
+        .filter((j, t) => !$(t).closest('[class~="exg"]').length && !$(t).closest('[class~="x_xd3"]').length)
+        .map((j, t) => {
+          const c = $(t).clone()
+          c.find('var, [class~="reg"], [class~="gp"]').remove()
+          return c.text().trim()
+        }).get().filter(Boolean).join(' / ')
+      const examples = []
+      $el.find('[class~="exg"]').each((j, ex) => {
+        const src = $(ex).find('[class~="ex"]').text().trim()
+        const tgt = $(ex).find('[class~="trg"] [class~="trans"]')
+          .map((k, t) => $(t).text().trim()).get().filter(Boolean).join(' / ')
+        if (src && tgt) examples.push({ src, tgt })
+      })
+      if (trans) senses.push({ num, context, trans, examples })
+    })
+
+    if (senses.length) sections.push({ pos, senses })
+  })
+
+  return { word, sections }
+}
+
+function lookupInBlocks(blocks, q) {
+  const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  for (const block of binarySearchBlock(blocks, q)) {
+    const raw = inflateSync(_bodyData.subarray(block.offset)).toString('utf8')
+    const m = raw.match(new RegExp(`<[^>]+d:title="${escaped}"[^>]*>.*?</[^:]+:entry>`, 's'))
+    if (m) return parseAppleEntry(m[0], q)
+  }
+  return null
+}
+
+export function lookup(word) {
+  initAppleDict()
+  if (!_enBlocks.length && !_ptBlocks.length) throw new Error('Apple Dictionary not available')
+
+  const q = word.trim()
+  const results = [lookupInBlocks(_ptBlocks, q), lookupInBlocks(_enBlocks, q)].filter(Boolean)
+  if (!results.length) throw new Error(`No entry found for "${q}"`)
   return results
 }
 
