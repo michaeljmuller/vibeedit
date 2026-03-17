@@ -6,4 +6,11 @@
  - enhance dictionary to show entries where the search term is part of the entry name (house -> house call, house guest, house-hunt, etc.)
  - bug: dictionary feature only finds first definition.  Cow, for example, has a noun entry and a transitive verb entry.
  - bug: noun genders aren't being displayed
- - copy to clipboard feature! 
+ - copy to clipboard feature!
+ - login (just mike@themullers.org for starters)
+ - admin area with user config (to grand others access)
+ - package for deployment elsewhere
+ - support intel
+ - all build tools should be executed from docker containers; no installation of node (for example) on the host environment.
+ - make links in dictionary to other words
+ 
