@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { FooHighlight } from './FooHighlight'
@@ -8,22 +8,38 @@ import DictionaryPanel from './DictionaryPanel'
 
 const DEFAULT_PROMPT = 'Review the text for grammatical errors, unclear phrasing, and style issues. Flag specific problems with suggested corrections.'
 
-const MenuBar = ({ editor, onCheck, checking, activePanel, onPanelToggle }) => {
+const IS_MAC = /macintosh|mac os x/i.test(navigator.userAgent)
+
+const PANELS = [
+  { id: 'check',      label: 'Check' },
+  { id: 'chat',       label: 'Chat' },
+  { id: 'translate',  label: 'Translate' },
+  { id: 'conjugate',  label: 'Conjugate' },
+  { id: 'dictionary', label: 'Dictionary' },
+]
+
+const MenuBar = ({ editor, onCheck, checking, activePanel, onPanelToggle, ctrlHeld }) => {
   if (!editor) return null
+
+  const label = (idx, text) => ctrlHeld ? `${text} [${idx + 1}]` : text
 
   return (
     <div className="menu-bar">
       <button onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive('bold') ? 'active' : ''}>Bold</button>
       <button onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive('italic') ? 'active' : ''}>Italic</button>
       <span className="divider" />
-      <button onClick={onCheck} disabled={checking} className="check-btn">
-        {checking ? 'Checking…' : 'Check'}
+      <button onClick={onCheck} disabled={checking} className={`check-btn${ctrlHeld ? ' hotkey-hint' : ''}`}>
+        {checking ? 'Checking…' : label(0, 'Check')}
       </button>
-      <button onClick={() => onPanelToggle('chat')} className={activePanel === 'chat' ? 'active' : ''}>Chat</button>
-      <button onClick={() => onPanelToggle('prompt')} className={activePanel === 'prompt' ? 'active' : ''}>Prompt</button>
-      <button onClick={() => onPanelToggle('translate')} className={activePanel === 'translate' ? 'active' : ''}>Translate</button>
-      <button onClick={() => onPanelToggle('conjugate')} className={activePanel === 'conjugate' ? 'active' : ''}>Conjugate</button>
-      <button onClick={() => onPanelToggle('dictionary')} className={activePanel === 'dictionary' ? 'active' : ''}>Dictionary</button>
+      {PANELS.slice(1).map((p, i) => (
+        <button
+          key={p.id}
+          onClick={() => onPanelToggle(p.id)}
+          className={`${activePanel === p.id ? 'active' : ''}${ctrlHeld ? ' hotkey-hint' : ''}`}
+        >
+          {label(i + 1, p.label)}
+        </button>
+      ))}
     </div>
   )
 }
@@ -77,10 +93,12 @@ export default function App() {
   const [chatHistory, setChatHistory] = useState([])
   const [conjugateState, setConjugateState] = useState({ verb: '', sections: null, error: null })
   const [dictState, setDictState] = useState({ word: '', results: null, error: null, loading: false })
+  const [ctrlHeld, setCtrlHeld] = useState(false)
   const hideTimer = useRef(null)
   const saveTimer = useRef(null)
 
   const editor = useEditor({
+    autofocus: true,
     extensions: [StarterKit, FooHighlight],
     content: localStorage.getItem('vibeedit-content') ?? '<p>Start writing something amazing...</p>',
     editorProps: {
@@ -100,7 +118,11 @@ export default function App() {
   })
 
   const handlePanelToggle = (panel) => {
-    setActivePanel(prev => prev === panel ? null : panel)
+    setActivePanel(prev => {
+      const next = prev === panel ? null : panel
+      if (next === null) editor?.commands.focus()
+      return next
+    })
   }
 
   const handlePromptChange = (e) => {
@@ -108,7 +130,7 @@ export default function App() {
     localStorage.setItem('vibeedit-prompt', e.target.value)
   }
 
-  const handleCheck = async () => {
+  const handleCheck = useCallback(async () => {
     setChecking(true)
     setError(null)
     editor.commands.setAnnotations([])
@@ -128,7 +150,40 @@ export default function App() {
     } finally {
       setChecking(false)
     }
-  }
+  }, [editor, prompt])
+
+  useEffect(() => {
+    if (!IS_MAC) return
+    const onKeyDown = (e) => {
+      if (e.key === 'Control') { setCtrlHeld(true); return }
+      if (!e.ctrlKey) return
+      if (e.key === '0') {
+        e.preventDefault()
+        setActivePanel(null)
+        editor?.commands.focus()
+        return
+      }
+      const idx = parseInt(e.key) - 1
+      if (idx < 0 || idx >= PANELS.length) return
+      e.preventDefault()
+      const panel = PANELS[idx]
+      if (panel.id === 'check') {
+        handleCheck()
+      } else {
+        handlePanelToggle(panel.id)
+      }
+    }
+    const onKeyUp = (e) => { if (e.key === 'Control') setCtrlHeld(false) }
+    const onBlur = () => setCtrlHeld(false)
+    window.addEventListener('keydown', onKeyDown, true)
+    window.addEventListener('keyup', onKeyUp, true)
+    window.addEventListener('blur', onBlur)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown, true)
+      window.removeEventListener('keyup', onKeyUp, true)
+      window.removeEventListener('blur', onBlur)
+    }
+  }, [handleCheck])
 
   const handleMouseOver = (e) => {
     const el = e.target.closest('.foo-highlight')
@@ -157,6 +212,7 @@ export default function App() {
           checking={checking}
           activePanel={activePanel}
           onPanelToggle={handlePanelToggle}
+          ctrlHeld={ctrlHeld}
         />
         {activePanel === 'prompt' && (
           <div className="prompt-bar">

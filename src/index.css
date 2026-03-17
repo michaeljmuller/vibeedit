@@ -64,6 +64,13 @@ h1 {
   cursor: not-allowed;
 }
 
+.menu-bar button.hotkey-hint {
+  min-width: 28px;
+  font-weight: 700;
+  color: #4a90e2;
+  border-color: #4a90e2;
+}
+
 .divider {
   width: 1px;
   background: #ddd;
