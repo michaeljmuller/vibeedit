@@ -1,4 +1,4 @@
-# Apple Dictionary Format: Portuguese–English
+# Oxford Dictionary Format: Portuguese–English
 
 Notes on the binary format of macOS Dictionary bundles, reverse-engineered from
 `Portuguese - English.dictionary`, and the lookup implementation built on top of it.
