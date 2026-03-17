@@ -13,6 +13,7 @@ const IS_MAC = /macintosh|mac os x/i.test(navigator.userAgent)
 const PANELS = [
   { id: 'check',      label: 'Check' },
   { id: 'chat',       label: 'Chat' },
+  { id: 'prompt',     label: 'Prompt' },
   { id: 'translate',  label: 'Translate' },
   { id: 'conjugate',  label: 'Conjugate' },
   { id: 'dictionary', label: 'Dictionary' },
@@ -221,7 +222,7 @@ export default function App() {
               id="prompt"
               value={prompt}
               onChange={handlePromptChange}
-              rows={3}
+              rows={8}
               autoFocus
             />
           </div>
