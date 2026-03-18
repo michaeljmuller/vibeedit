@@ -31,12 +31,17 @@ cp <portuguese-path>/Body.data <project-dir>/data/portuguese-english-dictionary.
 cp <italian-path>/Body.data <project-dir>/data/italian-english-dictionary.data
 
 
-## 4. Build and run
+## 4. Create a .env file with your API keys
 
 ```
-docker compose build \
-  --build-arg ANTHROPIC_API_KEY=<your-anthropic-key> \
-  --build-arg OPENAI_API_KEY=<your-openai-key>
+ANTHROPIC_API_KEY=<your-anthropic-key>
+OPENAI_API_KEY=<your-openai-key>
+```
+
+## 5. Build and run
+
+```
+docker compose build
 docker compose up
 ```
 

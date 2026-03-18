@@ -33,7 +33,7 @@ const client = new Anthropic()
 async function firstPass(text, prompt) {
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 1024,
+    max_tokens: 4096,
     system: `You are a text review assistant. Analyze the provided text according to the user's instructions.
 Respond ONLY with a valid JSON array. Each element must have:
 - "text": an exact substring from the input (must appear verbatim in the text)
@@ -53,7 +53,7 @@ Return only JSON, no markdown or explanation.`,
 async function reviewerPass(text, annotations) {
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 1024,
+    max_tokens: 4096,
     system: `You are a strict reviewer validating suggested corrections for a piece of text.
 You will receive the original text and a list of proposed corrections.
 Your job is to filter out any corrections that are:

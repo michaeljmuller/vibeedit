@@ -13,4 +13,8 @@
  - support intel
  - all build tools should be executed from docker containers; no installation of node (for example) on the host environment.
  - make links in dictionary to other words
+ - change the "prompt" button into a settings page.  add the ability to customize the instructions given to the "chat" feature.
+ - dictionary lookup seems to be case sensitive: "latin" not found but "Latin" is
+ - no need to log error when dictionary lookup fails
+ - try other TTS options.  1) fuck openai 2) sounds pt-br to me (t is ch)
  

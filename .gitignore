@@ -1,4 +1,5 @@
 .apikey
+.env
 node_modules
 dist
 .claude
