@@ -8,3 +8,10 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
     restart: unless-stopped
+    environment:
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL:-http://localhost:3000/auth/google/callback}
+      - SESSION_SECRET=${SESSION_SECRET}
+    volumes:
+      - ./config/allowed-emails.txt:/config/allowed-emails.txt:ro
