@@ -88,9 +88,8 @@ function initAppleDict() {
       if (!raw.includes('d:entry')) continue
       const titles = [...raw.matchAll(/d:title="([^"]+)"/g)].map(m => m[1])
       if (!titles.length) continue
-      const idMatch = raw.match(/id="([^"]+)"/)
       const block = { offset: i, first: titles[0], last: titles.at(-1) }
-      idMatch?.[1].includes('pt-en') ? pt.push(block) : en.push(block)
+      raw.includes('-pt-en') ? pt.push(block) : en.push(block)
     } catch {}
   }
 
@@ -98,12 +97,20 @@ function initAppleDict() {
   _ptBlocks = pt
 }
 
+// Normalize a string to match the Apple Dictionary's sort order, which files
+// accented characters under their base letter and ignores non-alphabetic chars.
+function dictNormalize(s) {
+  return s.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')  // strip diacritics
+    .replace(/[^a-z0-9]/g, '')                          // ignore punctuation/spaces
+}
+
 function binarySearchBlock(blocks, word) {
-  const w = word.toLowerCase()
+  const w = dictNormalize(word)
   let lo = 0, hi = blocks.length - 1
   while (lo < hi) {
     const mid = Math.floor((lo + hi + 1) / 2)
-    if (blocks[mid].first.toLowerCase() <= w) lo = mid
+    if (dictNormalize(blocks[mid].first) <= w) lo = mid
     else hi = mid - 1
   }
   // Return the block and its neighbour in case of boundary
@@ -150,12 +157,39 @@ function parseAppleEntry(xml, word) {
   return { word, sections }
 }
 
-function lookupInBlocks(blocks, q) {
+function lookupInBlocks(blocks, q, depth = 0) {
   const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const qNorm = dictNormalize(q)
   for (const block of binarySearchBlock(blocks, q)) {
     const raw = inflateSync(_bodyData.subarray(block.offset)).toString('utf8')
-    const m = raw.match(new RegExp(`<[^>]+d:title="${escaped}"[^>]*>.*?</[^:]+:entry>`, 's'))
-    if (m) return parseAppleEntry(m[0], q)
+    // Exact title match
+    let m = raw.match(new RegExp(`<[^>]+d:title="${escaped}"[^>]*>.*?</[^:]+:entry>`, 's'))
+    if (m) {
+      const result = parseAppleEntry(m[0], q)
+      // If the entry is a pure cross-reference stub (no senses), follow it once
+      if (!result.sections.length && depth === 0) {
+        const xrTitle = m[0].match(/class="xr"[^>]*>.*?title="([^"]+)"/)
+          ?? m[0].match(/title="([^"]+)"[^>]*>.*?class="xr"/)
+          ?? m[0].match(/<a[^>]+title="([^"]+)"/)
+        if (xrTitle) return lookupInBlocks(blocks, xrTitle[1], 1)
+      }
+      return result
+    }
+    // Diacritic-variant match (e.g. ténis finds tênis)
+    for (const [, title] of raw.matchAll(/d:title="([^"]+)"/g)) {
+      if (dictNormalize(title) === qNorm) {
+        const te = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        m = raw.match(new RegExp(`<[^>]+d:title="${te}"[^>]*>.*?</[^:]+:entry>`, 's'))
+        if (m) {
+          const result = parseAppleEntry(m[0], q)
+          if (!result.sections.length && depth === 0) {
+            const xrTitle = m[0].match(/<a[^>]+title="([^"]+)"/)
+            if (xrTitle) return lookupInBlocks(blocks, xrTitle[1], 1)
+          }
+          return result
+        }
+      }
+    }
   }
   return null
 }
