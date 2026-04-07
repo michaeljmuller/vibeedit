@@ -21,3 +21,7 @@
  - larger chat window for long questions (multi-line?)
  - hide the pop-up when the blue squiggly is removed
  - resizing doesn't grow/shrink the translation window
+ - bug: the pop-up with corrections from pressing the "check" button isn't fully visible when the correction is close to the bottom of the window.
+ - translate feature doesn't cache; re-translates every time the window opens
+ - do we have a limit to prevent a HUGE chat history from chewing up token usage?
+ - feature: token usage indicator / cost estimator
