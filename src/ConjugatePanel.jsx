@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Results } from './languages/pt'
+import { Results } from './ConjugateResults'
 
-export default function ConjugatePanel({ state, setState }) {
+export default function ConjugatePanel({ state, setState, lang }) {
   const [loading, setLoading] = useState(false)
   const { verb, sections, error } = state
 
@@ -20,7 +20,7 @@ export default function ConjugatePanel({ state, setState }) {
       const res = await fetch('/api/conjugate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ verb: v, lang: 'pt' }),
+        body: JSON.stringify({ verb: v, lang }),
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)

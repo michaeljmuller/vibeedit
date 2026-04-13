@@ -34,7 +34,7 @@ function DictResult({ result }) {
   )
 }
 
-export default function DictionaryPanel({ state, setState }) {
+export default function DictionaryPanel({ state, setState, lang }) {
   const { word, results, error, loading } = state
   const [input, setInput] = useState(word || '')
 
@@ -44,7 +44,7 @@ export default function DictionaryPanel({ state, setState }) {
       const res = await fetch('/api/dictionary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ word: w, lang: 'pt' }),
+        body: JSON.stringify({ word: w, lang }),
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)

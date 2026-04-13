@@ -17,13 +17,13 @@ Launch the Dictionary app on a Mac.  Go to Dictionary --> Settings in the menu b
 - Oxford Portuguese Dictionary
 - Oxford Paravia Il Dizionario
 
-## 2. Locate the dictionary file
+## 2. Locate the dictionary files
 
 Locate each dictionary's Body.data file:
 
 ```
 find /System/Library/AssetsV2/com_apple_MobileAsset_DictionaryServices_dictionaryOSX \
-  -name Body.data | grep -i portuguese
+  -name Body.data | grep -iE "portuguese|italian"
 ```
 
 ## 3. Copy the dictionary files to the project

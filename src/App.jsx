@@ -6,7 +6,11 @@ import ChatPanel from './ChatPanel'
 import ConjugatePanel from './ConjugatePanel'
 import DictionaryPanel from './DictionaryPanel'
 
-const DEFAULT_PROMPT = 'Review the text for grammatical errors, unclear phrasing, and style issues. Flag specific problems with suggested corrections.'
+const LANGUAGES = [
+  { code: 'pt-PT', label: 'Portuguese (Portugal)' },
+  { code: 'pt-BR', label: 'Portuguese (Brazil)' },
+  { code: 'it',    label: 'Italian' },
+]
 
 const IS_MAC = /macintosh|mac os x/i.test(navigator.userAgent)
 
@@ -196,8 +200,23 @@ function TranslatePanel({ getEditorHtml }) {
   )
 }
 
+// Migrate old bare 'pt' localStorage keys to 'pt-PT'
+;(() => {
+  if (localStorage.getItem('vibeedit-lang') === 'pt') {
+    localStorage.setItem('vibeedit-lang', 'pt-PT')
+    const old = localStorage.getItem('vibeedit-prompt')
+    if (old !== null) {
+      if (localStorage.getItem('vibeedit-prompt-pt-PT') === null) {
+        localStorage.setItem('vibeedit-prompt-pt-PT', old)
+      }
+      localStorage.removeItem('vibeedit-prompt')
+    }
+  }
+})()
+
 export default function App() {
-  const [prompt, setPrompt] = useState(localStorage.getItem('vibeedit-prompt') ?? DEFAULT_PROMPT)
+  const [lang, setLang] = useState(() => localStorage.getItem('vibeedit-lang') ?? 'pt-PT')
+  const [prompt, setPrompt] = useState(() => localStorage.getItem(`vibeedit-prompt-${localStorage.getItem('vibeedit-lang') ?? 'pt-PT'}`) ?? '')
   const [checking, setChecking] = useState(false)
   const [error, setError] = useState(null)
   const [tooltip, setTooltip] = useState(null)
@@ -276,9 +295,31 @@ export default function App() {
     })
   }
 
+  useEffect(() => {
+    const saved = localStorage.getItem(`vibeedit-prompt-${lang}`)
+    if (saved !== null) {
+      setPrompt(saved)
+      return
+    }
+    fetch(`/api/prompts/${lang}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.prompt) {
+          setPrompt(d.prompt)
+          localStorage.setItem(`vibeedit-prompt-${lang}`, d.prompt)
+        }
+      })
+      .catch(() => {})
+  }, [lang])
+
+  const handleLangChange = (code) => {
+    setLang(code)
+    localStorage.setItem('vibeedit-lang', code)
+  }
+
   const handlePromptChange = (e) => {
     setPrompt(e.target.value)
-    localStorage.setItem('vibeedit-prompt', e.target.value)
+    localStorage.setItem(`vibeedit-prompt-${lang}`, e.target.value)
   }
 
   const handleCheck = useCallback(async () => {
@@ -287,11 +328,18 @@ export default function App() {
     editor.commands.setAnnotations([])
 
     const text = editor.getText()
+    const langLabel = LANGUAGES.find(l => l.code === lang)?.label ?? lang
+    const expandedPrompt = prompt.replace(/\{\{language\}\}/g, langLabel)
+    if (!expandedPrompt.trim()) {
+      setError('No review prompt configured. Open the Prompt panel to set one.')
+      setChecking(false)
+      return
+    }
     try {
       const res = await fetch('/api/check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, prompt }),
+        body: JSON.stringify({ text, prompt: expandedPrompt }),
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
@@ -355,7 +403,12 @@ export default function App() {
 
   return (
     <div className="container">
-      <h1>VibeEdit</h1>
+      <div className="title-bar">
+        <h1>VibeEdit</h1>
+        <select className="lang-picker" value={lang} onChange={e => handleLangChange(e.target.value)}>
+          {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
+        </select>
+      </div>
       <div className="editor-wrapper">
         <MenuBar
           editor={editor}
@@ -372,7 +425,7 @@ export default function App() {
           <div ref={panelContentRef}>
           {activePanel === 'prompt' && (
             <div className="panel-bar" style={{ height: panelHeight }}>
-              <label htmlFor="prompt">Review prompt</label>
+              <label htmlFor="prompt">Review prompt <span className="prompt-hint">(use <code>{'{{language}}'}</code> to insert the selected language)</span></label>
               <textarea
                 id="prompt"
                 value={prompt}
@@ -384,8 +437,8 @@ export default function App() {
           {activePanel === 'translate' && (
             <TranslatePanel getEditorHtml={() => editor.getHTML()} />
           )}
-          {activePanel === 'conjugate' && <ConjugatePanel state={conjugateState} setState={setConjugateState} />}
-          {activePanel === 'dictionary' && <DictionaryPanel state={dictState} setState={setDictState} />}
+          {activePanel === 'conjugate' && <ConjugatePanel state={conjugateState} setState={setConjugateState} lang={lang} />}
+          {activePanel === 'dictionary' && <DictionaryPanel state={dictState} setState={setDictState} lang={lang} />}
           <div style={{ display: activePanel === 'speak' ? undefined : 'none' }}>
             <SpeakPanel getEditorText={() => editor.getText()} active={activePanel === 'speak'} />
           </div>

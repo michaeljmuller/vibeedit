@@ -3,6 +3,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package.json .
 RUN npm install
+RUN mkdir -p /app/data
 COPY . .
 RUN npm run build
 
@@ -13,7 +14,8 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json .
 COPY --from=builder /app/server.js .
 COPY --from=builder /app/languages ./languages
-COPY --from=builder /app/data/portuguese-english-dictionary.data ./data/portuguese-english-dictionary.data
+COPY --from=builder /app/prompts ./prompts
+COPY --from=builder /app/data ./data
 
 ARG ANTHROPIC_API_KEY
 ARG OPENAI_API_KEY

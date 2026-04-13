@@ -23,11 +23,27 @@ body {
   flex-direction: column;
 }
 
+.title-bar {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
 h1 {
   font-size: 2rem;
-  margin-bottom: 16px;
   color: #111;
-  flex-shrink: 0;
+}
+
+.lang-picker {
+  font-size: 0.85rem;
+  padding: 3px 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
 }
 
 .editor-wrapper {
@@ -169,6 +185,19 @@ h1 {
   color: #888;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.prompt-hint {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 11px;
+  color: #aaa;
+}
+
+.prompt-hint code {
+  font-family: monospace;
+  color: #999;
 }
 
 .panel-bar textarea {

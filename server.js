@@ -7,9 +7,10 @@ import session from 'express-session'
 import passport from 'passport'
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
 import { scrape as scrapePt, lookup as lookupPt } from './languages/pt.js'
+import { scrape as scrapeIt, lookup as lookupIt } from './languages/it.js'
 
-const languageScrapers = { pt: scrapePt }
-const languageLookup = { pt: lookupPt }
+const languageScrapers = { 'pt-PT': scrapePt, 'pt-BR': scrapePt, it: scrapeIt }
+const languageLookup = { 'pt-PT': lookupPt, 'pt-BR': lookupPt, it: lookupIt }
 
 // Load API keys from .apikey file if not in environment
 if (!process.env.ANTHROPIC_API_KEY || !process.env.OPENAI_API_KEY) {
@@ -186,6 +187,17 @@ Return only JSON, no markdown or explanation.`,
   return JSON.parse(raw)
 }
 
+app.get('/api/prompts/:lang', (req, res) => {
+  const { lang } = req.params
+  if (!languageLookup[lang]) return res.status(404).json({ error: `Unknown language: ${lang}` })
+  try {
+    const text = readFileSync(join(__dirname, 'prompts', `${lang}.txt`), 'utf8')
+    res.json({ prompt: text.trim() })
+  } catch {
+    res.status(404).json({ error: 'No prompt file for this language' })
+  }
+})
+
 app.post('/api/check', async (req, res) => {
   const { text, prompt, twoPass = true } = req.body
   try {
@@ -195,7 +207,7 @@ app.post('/api/check', async (req, res) => {
     }
     res.json({ annotations })
   } catch (err) {
-    console.error(err)
+    console.error('[check] error:', err.message)
     res.status(500).json({ error: err.message })
   }
 })
@@ -237,7 +249,7 @@ app.post('/api/chat', async (req, res) => {
 })
 
 app.post('/api/conjugate', async (req, res) => {
-  const { verb, lang = 'pt' } = req.body
+  const { verb, lang = 'pt-PT' } = req.body
   if (!verb) return res.status(400).json({ error: 'No verb provided' })
   const scraper = languageScrapers[lang]
   if (!scraper) return res.status(400).json({ error: `Unsupported language: ${lang}` })
@@ -251,7 +263,7 @@ app.post('/api/conjugate', async (req, res) => {
 })
 
 app.post('/api/dictionary', async (req, res) => {
-  const { word, dir = 'ptToEn', lang = 'pt' } = req.body
+  const { word, lang = 'pt-PT' } = req.body
   if (!word) return res.status(400).json({ error: 'No word provided' })
   const lookup = languageLookup[lang]
   if (!lookup) return res.status(400).json({ error: `Unsupported language: ${lang}` })

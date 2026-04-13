@@ -23,6 +23,18 @@ const DICTIONARIES = [
       'Wait for the download to complete, then re-run this script',
     ],
   },
+  {
+    name: 'Italian - English',
+    bundleName: 'Italian - English.dictionary',
+    destDir: 'italian-english-dictionary',
+    files: ['Body.data'],
+    instructions: [
+      'Open the Dictionary app (Applications > Dictionary)',
+      'Go to Dictionary > Settings (⌘,)',
+      'Check "Oxford Paravia Italian Dictionary" to download it',
+      'Wait for the download to complete, then re-run this script',
+    ],
+  },
 ]
 
 function findBundle(bundleName) {
