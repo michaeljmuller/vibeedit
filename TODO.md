@@ -4,7 +4,7 @@
  - bug: dictionary feature only finds first definition.  Cow, for example, has a noun entry and a transitive verb entry.
  - bug: noun genders aren't being displayed
  - copy to clipboard feature!
- - admin area with user config (to grand others access)
+ - admin area with user config (to grant others access)
  - make links in dictionary to other words
  - change the "prompt" button into a settings page.  add the ability to customize the instructions given to the "chat" feature.
  - dictionary lookup seems to be case sensitive: "latin" not found but "Latin" is
@@ -19,3 +19,4 @@
  - translate feature doesn't cache; re-translates every time the window opens
  - do we have a limit to prevent a HUGE chat history from chewing up token usage?
  - feature: token usage indicator / cost estimator
+ - better error message when word isn't found in conjugation tool
