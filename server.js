@@ -229,16 +229,17 @@ app.post('/api/translate', async (req, res) => {
 })
 
 app.post('/api/chat', async (req, res) => {
-  const { editorText, history, question } = req.body
+  const { editorText, history, question, prompt } = req.body
   try {
     const messages = [
       ...history,
       { role: 'user', content: question },
     ]
+    const system = `${prompt}\n\nThe user is working on the following document:\n\n---\n${editorText}\n---`
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 1024,
-      system: `You are a helpful writing assistant. The user is working on the following document:\n\n---\n${editorText}\n---\n\nAnswer questions about the document or writing in general.`,
+      system,
       messages,
     })
     res.json({ response: response.content[0].text })

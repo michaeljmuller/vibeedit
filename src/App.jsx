@@ -443,7 +443,7 @@ export default function App() {
             <SpeakPanel getEditorText={() => editor.getText()} active={activePanel === 'speak'} />
           </div>
           <div style={{ display: activePanel === 'chat' ? undefined : 'none' }}>
-            <ChatPanel getEditorText={() => editor.getText()} history={chatHistory} setHistory={setChatHistory} active={activePanel === 'chat'} />
+            <ChatPanel getEditorText={() => editor.getText()} history={chatHistory} setHistory={setChatHistory} active={activePanel === 'chat'} prompt={prompt.replace(/\{\{language\}\}/g, LANGUAGES.find(l => l.code === lang)?.label ?? lang)} />
           </div>
           </div>
         </div>

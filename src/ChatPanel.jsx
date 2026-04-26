@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Markdown from 'react-markdown'
 
-export default function ChatPanel({ getEditorText, history, setHistory, active }) {
+export default function ChatPanel({ getEditorText, history, setHistory, active, prompt }) {
   const [question, setQuestion] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -21,6 +21,11 @@ export default function ChatPanel({ getEditorText, history, setHistory, active }
     const q = question.trim()
     if (!q || loading) return
 
+    if (!prompt?.trim()) {
+      setError('No prompt configured. Open the Prompt panel to set one.')
+      return
+    }
+
     const newHistory = [...history, { role: 'user', content: q }]
     setHistory(newHistory)
     setQuestion('')
@@ -35,6 +40,7 @@ export default function ChatPanel({ getEditorText, history, setHistory, active }
           editorText: getEditorText(),
           history: history,
           question: q,
+          prompt,
         }),
       })
       const data = await res.json()
