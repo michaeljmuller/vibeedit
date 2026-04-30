@@ -16,6 +16,7 @@ COPY --from=builder /app/server.js .
 COPY --from=builder /app/languages ./languages
 COPY --from=builder /app/prompts ./prompts
 COPY --from=builder /app/data ./data
+COPY --from=builder /app/RELEASE-NOTES.txt .
 
 ARG ANTHROPIC_API_KEY
 ARG OPENAI_API_KEY

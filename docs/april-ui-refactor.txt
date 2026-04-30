@@ -1,0 +1,119 @@
+UI Improvement List — April 2026
+=================================
+
+Compiled after a full review of the running application with real content, cross-referenced
+against the existing TODO list.
+
+
+BUGS
+----
+
+1. Tooltip clips text when annotation is near the bottom of the viewport — the tooltip
+   should flip upward when there is insufficient space below. (TODO + confirmed by position
+   of "coma se chama" annotation near mid-page)
+
+2. Squiggly tooltip doesn't hide when the annotation is removed — stale tooltip persists.
+   (TODO)
+
+3. Translate panel doesn't respond to the resize handle — dragging the handle resizes the
+   panel container but not the translation output within it. (TODO + confirmed)
+
+4. Conjugate: "INDICATIVO" heading appears twice — the first group (preterito perfeito /
+   imperfeito / mais-que-perfeito) and the second group (presente / futuro) each show
+   "INDICATIVO" as a section heading. Should appear once. (observation)
+
+5. Conjugate: Subjuntivo "futuro" label renders with no table beneath it — the heading is
+   visible but the content is cut off. (observation; likely related to TODO: "pt conjugation
+   tool is missing conditional")
+
+
+USABILITY
+---------
+
+6. No way to close a panel except clicking its toolbar button again — this toggle behavior
+   is non-discoverable. Add an explicit × in the top-right corner of each panel. (TODO +
+   observation)
+
+7. Chat input is a single-line <input> — long questions require horizontal scrolling. Should
+   be a <textarea> that grows up to ~3 lines. (TODO + confirmed during use)
+
+8. No way to reset the chat history — users must reload the page. Add a "Clear chat" or
+   reset button. (TODO)
+
+9. No way to dismiss individual squiggly annotations without editing the text — add a small
+   × on hover to the annotation tooltip or inline. (TODO)
+
+10. The Prompt panel's connection to Chat is not communicated — the prompt feeds both Check
+    and Chat, but the panel label just says "REVIEW PROMPT" with no hint it affects Chat.
+    Users will be confused when Chat gives off-topic responses. Either retitle it "System
+    Prompt" or add a note. (observation)
+
+11. Translate re-runs every time the panel is opened — even when the text hasn't changed,
+    the API call fires. Should cache the last translated content and only re-run when the
+    text differs. (TODO)
+
+12. Conjugate results fill the entire viewport — with a real conjugation table, the panel
+    takes ~60% of the screen and the editor is barely reachable. The panel height should
+    default to something more modest and be draggable. (observation)
+
+13. Formatting buttons (Bold, Italic) are visually indistinguishable from tool-toggle
+    buttons (Chat, Conjugate, etc.) — these are categorically different interactions.
+    Bold/Italic should be separated and styled differently. (observation)
+
+14. Check reads as a toggle, not a primary action — it is in the same visual row and style
+    as panel-toggle buttons, but it fires an analysis. It should look like a distinct action
+    button. (observation)
+
+15. The resize handle between panel and editor is invisible — 5px of near-white on white.
+    A visible drag-dots affordance would make it discoverable. (observation)
+
+16. No user account or logout affordance — there is nowhere to sign out. Add an
+    avatar/initials badge in the title bar. (observation)
+
+17. Better error message when conjugation lookup fails — currently unclear. (TODO)
+
+
+AESTHETICS AND POLISH
+---------------------
+
+18. Panel headers are inconsistent — Dictionary shows "DICTIONARY", Translate shows
+    "ENGLISH TRANSLATION", Prompt shows "REVIEW PROMPT", Chat shows nothing, Conjugate
+    shows nothing. Either all panels have a header or none do.
+
+19. The active-panel button style uses a "pressed" metaphor (background: #333, white text)
+    which implies a momentary action, not a persistent open state. A tab-style indicator
+    (underline or bottom border on the active button) would be more semantically accurate.
+
+20. Panels open and close with no animation — a short max-height transition (150ms ease-out)
+    would make the layout feel less jarring.
+
+21. The prompt hint text is nearly invisible — "(use {{language}} to insert the selected
+    language)" renders in gray on the uppercase label line and is very easy to miss.
+
+22. Login page is stark — a completely black page with a single small card conveys an
+    unfinished product. Even a subtle background and a one-line app description would help.
+
+
+PRIORITY ORDER
+--------------
+
+ 1. Tooltip viewport clipping                    (Bug)
+ 2. Chat input → textarea (multi-line)           (Usability)
+ 3. Explicit × close button on panels            (Usability)
+ 4. Translate caching                            (Usability)
+ 5. Conjugate viewport overflow                  (Usability)
+ 6. Reset chat button                            (Usability)
+ 7. Dismiss squiggly ×                           (Usability)
+ 8. Stale tooltip after squiggly removed         (Bug)
+ 9. Translate resize bug                         (Bug)
+10. Conjugate duplicate "INDICATIVO" heading     (Bug)
+11. Prompt panel label clarification             (Usability)
+12. Bold/Italic visual separation                (Aesthetic)
+13. Check as primary action button               (Aesthetic)
+14. Resize handle affordance                     (Usability)
+15. User account / logout                        (Usability)
+16. Panel header consistency                     (Aesthetic)
+17. Active button → tab style                    (Aesthetic)
+18. Panel open/close animation                   (Aesthetic)
+19. Prompt hint text visibility                  (Aesthetic)
+20. Login page branding                          (Aesthetic)

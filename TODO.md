@@ -5,23 +5,25 @@
  - bug: noun genders aren't being displayed
  - copy to clipboard feature!
  - admin area with user config (to grant others access)
- - make links in dictionary to other words
  - change the "prompt" button into a settings page.  add the ability to customize the instructions given to the "chat" feature.
  - dictionary lookup seems to be case sensitive: "latin" not found but "Latin" is
  - no need to log error when dictionary lookup fails
  - try other TTS options.  1) fuck openai 2) sounds pt-br to me (t is ch/dj)
  - handle 529 gracefully in chat (don't lose prompt)
- - larger chat window for long questions (multi-line?)
- - hide the pop-up when the blue squiggly is removed?
- - add an "x" to dismiss a squiggly without changing it?
- - resizing doesn't grow/shrink the translation window
- - bug: the pop-up with corrections from pressing the "check" button isn't fully visible when the correction is close to the bottom of the window.
- - translate feature doesn't cache; re-translates every time the window opens
  - do we have a limit to prevent a HUGE chat history from chewing up token usage?
  - feature: token usage indicator / cost estimator
  - better error message when word isn't found in conjugation tool
  - make it so you can add users without having to re-start
  - pt conjugation tool is missing conditional!
- - button to reset chat
  - log all LLM interactions, expose in UI
  - save / backup?
+
+
+ - make links in dictionary to other words
+ - larger chat window for long questions (multi-line?)
+ - hide the pop-up when the blue squiggly is removed?
+ - add an "x" to dismiss a squiggly without changing it?
+ - resizing doesn't grow/shrink the translation window
+ - bug: the pop-up with corrections from pressing the "check" button isn't fully visible when the correction is close to the bottom of the window.
+ - button to reset chat
+ - translate feature doesn't cache; re-translates every time the window opens

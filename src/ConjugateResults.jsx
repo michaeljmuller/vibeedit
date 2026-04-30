@@ -26,21 +26,30 @@ function ConjugateTable({ tense }) {
   )
 }
 
-function ConjugateSection({ section }) {
+function ConjugateSection({ section, showHeading }) {
+  const validTenses = section.tenses.filter(t => t.rows?.length > 0)
+  if (validTenses.length === 0) return null
   return (
     <div className="conj-section">
-      <h3 className="conj-heading">{section.heading}</h3>
+      {showHeading && <h3 className="conj-heading">{section.heading}</h3>}
       <div className="conj-tenses">
-        {section.tenses.map((tense, i) => <ConjugateTable key={i} tense={tense} />)}
+        {validTenses.map((tense, i) => <ConjugateTable key={i} tense={tense} />)}
       </div>
     </div>
   )
 }
 
 export function Results({ sections }) {
+  const visible = sections.filter(s => s.tenses.some(t => t.rows?.length > 0))
   return (
     <div className="conj-output">
-      {sections.map((section, i) => <ConjugateSection key={i} section={section} />)}
+      {visible.map((section, i) => (
+        <ConjugateSection
+          key={i}
+          section={section}
+          showHeading={i === 0 || visible[i - 1].heading !== section.heading}
+        />
+      ))}
     </div>
   )
 }

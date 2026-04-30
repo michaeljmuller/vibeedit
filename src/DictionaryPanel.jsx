@@ -14,7 +14,7 @@ function DictResult({ result, onWordClick }) {
   return (
     <div className="dict-result">
       <div className="dict-result-header">
-        <span className="dict-result-word">{result.word}</span>
+        <span className="dict-result-word dict-word-link" onClick={() => onWordClick(result.word)}>{result.word}</span>
       </div>
       {result.sections.map((sec, si) => (
         <div key={si} className="dict-section">
@@ -22,7 +22,7 @@ function DictResult({ result, onWordClick }) {
           <ol className="dict-senses">
             {sec.senses.map((s, i) => (
               <li key={i} className="dict-sense">
-                {s.context && <span className="dict-context">({s.context}) </span>}
+                {s.context && <span className="dict-context">({clickableText(s.context, onWordClick)}) </span>}
                 <span className="dict-trans">{clickableText(s.trans, onWordClick)}</span>
                 {s.examples.length > 0 && (
                   <ul className="dict-examples">
@@ -76,7 +76,6 @@ export default function DictionaryPanel({ state, setState, lang }) {
 
   return (
     <div className="panel-bar dict-panel">
-      <label>Dictionary</label>
       <form className="dict-input-row" onSubmit={handleSubmit}>
         <input
           value={input}

@@ -1,3 +1,4 @@
+.playwright-mcp/
 .apikey
 .env
 node_modules

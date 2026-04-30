@@ -1,0 +1,59 @@
+APRIL 29, 2026
+--------------
+
+Bugs fixed:
+- Annotation highlights now work across bold/italic mark boundaries — text flagged
+  by the checker that spans a formatting change (e.g. "é um burla" where "um" is
+  italic) was silently not underlined; the highlight engine now searches each
+  paragraph's full text content and maps positions back across text nodes
+- Stale annotation tooltip now clears automatically when the document is edited
+- Tooltip flips above the annotation when it would otherwise appear in the lower
+  40% of the viewport
+- Translate panel is now always-mounted — reopening it after switching panels no
+  longer triggers a redundant re-translation if the text hasn't changed
+- Conjugate: duplicate section headings suppressed (e.g. "INDICATIVO" appeared
+  twice when consecutive sections shared the same heading)
+- Conjugate: sections with no table rows are filtered out entirely
+- Conjugate: error messages improved for "not found" cases with clearer guidance
+  to check spelling or try the infinitive form
+- Dictionary: result word headings and context labels (e.g. "(posição oficial)")
+  are now clickable for quick lookup, not just translations and examples
+
+New features:
+- Settings page (gear icon in title bar) with per-language chat prompt editor
+  and language selector; prompt auto-saves to localStorage
+- Language picker removed from title bar; selected language shown as static text;
+  picker lives in Settings alongside the prompt
+- LLM request/response log in Settings — every call to Claude is captured
+  (check pass 1, check pass 2, translate, chat) with timestamp, duration, system
+  prompt, messages, and response; JSON responses are pretty-printed; buffer is
+  capped at 1 MB with oldest entries dropped first; log scrolls to the bottom on
+  load and refresh
+- User email, gear icon (Settings), and Sign out link in the title bar via a new
+  /api/me endpoint
+- Escape key closes the active panel and returns focus to the editor
+- Tooltip now has a × dismiss button to remove individual annotations without
+  editing the text
+- "Clear chat" button appears in the Chat panel header once there is history
+
+Usability:
+- Universal panel header bar with a consistent title and × close button on every
+  panel; "Clear chat" secondary action shown only in the Chat panel
+- Separator added between the Check button and the panel toggle buttons in the
+  toolbar
+- Chat input promoted from a single-line <input> to an auto-growing <textarea>;
+  Enter sends, Shift+Enter inserts a newline; textarea resets to one line after send
+- Dictionary word links (translations, examples, context labels, result headings)
+  underline only on hover to reduce visual clutter
+
+Aesthetics:
+- Check is now a blue primary action button, visually distinct from panel toggles
+- Active panel buttons use a light blue tint (tab-style) instead of dark fill
+- Panel fade-in animation on open
+- Resize handle has a visible double-line drag indicator
+- Annotation squiggly underline changed from blue (conflicts with links) to
+  orange-red
+- Error tooltip redesigned: dark card with a blue left border and a × dismiss
+  button; flips above the annotation near the bottom of the viewport
+- Login page redesigned: dark gradient background, frosted-glass card, app
+  tagline, improved button hover states

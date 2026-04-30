@@ -32,6 +32,12 @@ export default function ConjugatePanel({ state, setState, lang }) {
     }
   }
 
+  const errorMsg = error
+    ? (error.toLowerCase().includes('not found') || error.toLowerCase().includes('no results')
+        ? `"${verb}" was not found. Check the spelling or try the infinitive form.`
+        : error)
+    : null
+
   return (
     <div className="panel-bar conjugate-panel">
       <form className="conjugate-input-row" onSubmit={handleSubmit}>
@@ -49,7 +55,7 @@ export default function ConjugatePanel({ state, setState, lang }) {
           {loading ? 'Looking up…' : 'Conjugate'}
         </button>
       </form>
-      {error && <p className="translate-status error">{error}</p>}
+      {errorMsg && <p className="panel-error">{errorMsg}</p>}
       {sections && <Results sections={sections} />}
     </div>
   )

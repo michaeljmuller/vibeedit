@@ -6,29 +6,46 @@ export default function ChatPanel({ getEditorText, history, setHistory, active, 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const bottomRef = useRef(null)
-  const inputRef = useRef(null)
+  const textareaRef = useRef(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [history, loading])
 
   useEffect(() => {
-    if (active) inputRef.current?.focus()
+    if (active) textareaRef.current?.focus()
   }, [active])
 
+  const adjustHeight = () => {
+    const ta = textareaRef.current
+    if (!ta) return
+    ta.style.height = 'auto'
+    ta.style.height = Math.min(ta.scrollHeight, 120) + 'px'
+  }
+
+  const handleChange = (e) => {
+    setQuestion(e.target.value)
+    adjustHeight()
+  }
+
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e?.preventDefault()
     const q = question.trim()
     if (!q || loading) return
 
     if (!prompt?.trim()) {
-      setError('No prompt configured. Open the Prompt panel to set one.')
+      setError('No chat prompt configured. Open Settings to set one.')
       return
     }
 
     const newHistory = [...history, { role: 'user', content: q }]
     setHistory(newHistory)
     setQuestion('')
+    requestAnimationFrame(() => {
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto'
+      }
+    })
     setLoading(true)
     setError(null)
 
@@ -48,9 +65,16 @@ export default function ChatPanel({ getEditorText, history, setHistory, active, 
       setHistory([...newHistory, { role: 'assistant', content: data.response }])
     } catch (err) {
       setError(err.message)
-      setHistory(history) // revert optimistic update
+      setHistory(history)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSubmit()
     }
   }
 
@@ -79,15 +103,17 @@ export default function ChatPanel({ getEditorText, history, setHistory, active, 
         <div ref={bottomRef} />
       </div>
       <form className="chat-input-row" onSubmit={handleSubmit}>
-        <input
-          ref={inputRef}
-          type="text"
+        <textarea
+          ref={textareaRef}
           value={question}
-          onChange={e => setQuestion(e.target.value)}
-          placeholder="Ask a question…"
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          placeholder="Ask a question… (Enter to send, Shift+Enter for new line)"
           disabled={loading}
           autoComplete="off"
           spellCheck={false}
+          rows={1}
+          className="chat-textarea"
         />
         <button type="submit" disabled={loading || !question.trim()}>Send</button>
       </form>

@@ -97,27 +97,36 @@ app.get('/login', (req, res) => {
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #1a1a1a; color: #e0e0e0;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0f172a 100%);
+      color: #e2e8f0;
       display: flex; align-items: center; justify-content: center; min-height: 100vh;
     }
     .card {
-      background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 12px;
-      padding: 48px 40px; text-align: center; max-width: 360px; width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      padding: 52px 44px;
+      text-align: center;
+      max-width: 380px;
+      width: 100%;
+      backdrop-filter: blur(12px);
     }
-    h1 { font-size: 1.5rem; margin-bottom: 8px; }
-    p { color: #888; margin-bottom: 32px; font-size: 0.9rem; }
+    h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.02em; }
+    .tagline { color: #94a3b8; margin-bottom: 36px; font-size: 0.9rem; line-height: 1.6; }
     a {
       display: inline-flex; align-items: center; gap: 10px;
-      background: #fff; color: #333; text-decoration: none;
-      padding: 12px 24px; border-radius: 6px; font-weight: 500; font-size: 0.95rem;
+      background: #fff; color: #1e293b; text-decoration: none;
+      padding: 13px 28px; border-radius: 8px; font-weight: 500; font-size: 0.95rem;
+      transition: background 0.15s, box-shadow 0.15s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
-    a:hover { background: #f0f0f0; }
+    a:hover { background: #f1f5f9; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
   </style>
 </head>
 <body>
   <div class="card">
     <h1>VibeEdit</h1>
-    <p>Sign in to continue</p>
+    <p class="tagline">A writing assistant for language learners.<br>Check grammar, translate, conjugate, and more.</p>
     <a href="/auth/google">
       <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -143,10 +152,66 @@ app.use(express.static(join(__dirname, 'dist')))
 
 // ── API ───────────────────────────────────────────────────────────────────────
 
+app.get('/api/me', (req, res) => {
+  res.json({ email: req.user.email })
+})
+
+app.get('/api/release-notes', (req, res) => {
+  try {
+    const text = readFileSync(join(__dirname, 'RELEASE-NOTES.txt'), 'utf8')
+    res.json({ text })
+  } catch {
+    res.json({ text: '(release notes not available)' })
+  }
+})
+
 const client = new Anthropic()
 
+// ── LLM request/response log ──────────────────────────────────────────────────
+
+const MAX_LOG_BYTES = 1024 * 1024  // 1MB
+const llmLog = []
+let llmLogSize = 0
+
+function addLogEntry(entry) {
+  const size = JSON.stringify(entry).length
+  while (llmLog.length > 0 && llmLogSize + size > MAX_LOG_BYTES) {
+    const removed = llmLog.shift()
+    llmLogSize -= JSON.stringify(removed).length
+  }
+  llmLog.push(entry)
+  llmLogSize += size
+}
+
+async function callClaude(type, params) {
+  const start = Date.now()
+  try {
+    const response = await client.messages.create(params)
+    const text = response.content[0]?.text ?? ''
+    addLogEntry({
+      ts: new Date().toISOString(),
+      type,
+      durationMs: Date.now() - start,
+      system: params.system,
+      messages: params.messages,
+      response: text,
+    })
+    return text
+  } catch (err) {
+    addLogEntry({
+      ts: new Date().toISOString(),
+      type,
+      durationMs: Date.now() - start,
+      system: params.system,
+      messages: params.messages,
+      error: err.message,
+    })
+    throw err
+  }
+}
+
 async function firstPass(text, prompt) {
-  const response = await client.messages.create({
+  const raw = await callClaude('check (pass 1)', {
     model: 'claude-sonnet-4-6',
     max_tokens: 4096,
     system: `You are a text review assistant. Analyze the provided text according to the user's instructions.
@@ -161,30 +226,22 @@ Return only JSON, no markdown or explanation.`,
       content: `Instructions: ${prompt}\n\nText to review:\n${text}`,
     }],
   })
-  const raw = response.content[0].text.replace(/^```[^\n]*\n?|\n?```$/g, '').trim()
-  return JSON.parse(raw)
+  return JSON.parse(raw.replace(/^```[^\n]*\n?|\n?```$/g, '').trim())
 }
 
+const reviewerPrompt = readFileSync(join(__dirname, 'prompts', 'reviewer.txt'), 'utf8').trim()
+
 async function reviewerPass(text, annotations) {
-  const response = await client.messages.create({
+  const raw = await callClaude('check (pass 2)', {
     model: 'claude-sonnet-4-6',
     max_tokens: 4096,
-    system: `You are a strict reviewer validating suggested corrections for a piece of text.
-You will receive the original text and a list of proposed corrections.
-Your job is to filter out any corrections that are:
-- Incorrect or not genuine errors
-- Not an exact substring of the original text
-- Overly pedantic or subjective without clear justification
-
-Return ONLY a valid JSON array containing the corrections you consider valid, in the same format as the input.
-Return only JSON, no markdown or explanation.`,
+    system: reviewerPrompt,
     messages: [{
       role: 'user',
       content: `Original text:\n${text}\n\nProposed corrections:\n${JSON.stringify(annotations, null, 2)}`,
     }],
   })
-  const raw = response.content[0].text.replace(/^```[^\n]*\n?|\n?```$/g, '').trim()
-  return JSON.parse(raw)
+  return JSON.parse(raw.replace(/^```[^\n]*\n?|\n?```$/g, '').trim())
 }
 
 app.get('/api/prompts/:lang', (req, res) => {
@@ -212,16 +269,26 @@ app.post('/api/check', async (req, res) => {
   }
 })
 
+app.get('/api/log', (req, res) => {
+  res.json({ entries: llmLog })
+})
+
+app.delete('/api/log', (req, res) => {
+  llmLog.length = 0
+  llmLogSize = 0
+  res.json({ ok: true })
+})
+
 app.post('/api/translate', async (req, res) => {
   const { text } = req.body
   try {
-    const response = await client.messages.create({
+    const translation = await callClaude('translate', {
       model: 'claude-sonnet-4-6',
       max_tokens: 2048,
       system: 'You are a translator. The user will provide HTML content. Translate all text into English while preserving all HTML tags and structure exactly. Return only the translated HTML, no explanation or commentary.',
       messages: [{ role: 'user', content: text }],
     })
-    res.json({ translation: response.content[0].text })
+    res.json({ translation })
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: err.message })
@@ -236,13 +303,13 @@ app.post('/api/chat', async (req, res) => {
       { role: 'user', content: question },
     ]
     const system = `${prompt}\n\nThe user is working on the following document:\n\n---\n${editorText}\n---`
-    const response = await client.messages.create({
+    const response = await callClaude('chat', {
       model: 'claude-sonnet-4-6',
       max_tokens: 1024,
       system,
       messages,
     })
-    res.json({ response: response.content[0].text })
+    res.json({ response })
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: err.message })

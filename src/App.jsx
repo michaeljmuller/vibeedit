@@ -5,6 +5,7 @@ import { FooHighlight } from './FooHighlight'
 import ChatPanel from './ChatPanel'
 import ConjugatePanel from './ConjugatePanel'
 import DictionaryPanel from './DictionaryPanel'
+import SettingsPage from './SettingsPage'
 
 const LANGUAGES = [
   { code: 'pt-PT', label: 'Portuguese (Portugal)' },
@@ -17,12 +18,19 @@ const IS_MAC = /macintosh|mac os x/i.test(navigator.userAgent)
 const PANELS = [
   { id: 'check',      label: 'Check' },
   { id: 'chat',       label: 'Chat' },
-  { id: 'prompt',     label: 'Prompt' },
   { id: 'translate',  label: 'Translate' },
   { id: 'conjugate',  label: 'Conjugate' },
   { id: 'dictionary', label: 'Dictionary' },
   { id: 'speak',      label: 'Speak' },
 ]
+
+const PANEL_TITLES = {
+  chat:       'Chat',
+  translate:  'Translation',
+  conjugate:  'Conjugate',
+  dictionary: 'Dictionary',
+  speak:      'Text to Speech',
+}
 
 const MenuBar = ({ editor, onCheck, checking, activePanel, onPanelToggle, ctrlHeld }) => {
   if (!editor) return null
@@ -37,11 +45,15 @@ const MenuBar = ({ editor, onCheck, checking, activePanel, onPanelToggle, ctrlHe
       <button onClick={onCheck} disabled={checking} className={`check-btn${ctrlHeld ? ' hotkey-hint' : ''}`}>
         {checking ? 'Checking…' : label(0, 'Check')}
       </button>
+      <span className="divider" />
       {PANELS.slice(1).map((p, i) => (
         <button
           key={p.id}
           onClick={() => onPanelToggle(p.id)}
-          className={`${activePanel === p.id ? 'active' : ''}${ctrlHeld ? ' hotkey-hint' : ''}`}
+          className={[
+            activePanel === p.id ? 'panel-active' : '',
+            ctrlHeld ? 'hotkey-hint' : '',
+          ].filter(Boolean).join(' ')}
         >
           {label(i + 1, p.label)}
         </button>
@@ -117,14 +129,11 @@ function SpeakPanel({ getEditorText, active }) {
 
   return (
     <div className="panel-bar speak-panel">
-      <div className="speak-header">
-        <label>Text to Speech</label>
-        <div className="speak-header-controls">
-          <select className="voice-picker" value={voice} onChange={handleVoiceChange} disabled={loading}>
-            {VOICES.map(v => <option key={v} value={v}>{v}</option>)}
-          </select>
-          <button className="regen-btn" onClick={generate} disabled={loading}>↺ Re-generate</button>
-        </div>
+      <div className="speak-controls-row">
+        <select className="voice-picker" value={voice} onChange={handleVoiceChange} disabled={loading}>
+          {VOICES.map(v => <option key={v} value={v}>{v}</option>)}
+        </select>
+        <button className="regen-btn" onClick={generate} disabled={loading}>↺ Re-generate</button>
       </div>
       {loading && <p className="speak-status">Generating audio…</p>}
       {error && <p className="speak-status error">{error}</p>}
@@ -156,7 +165,7 @@ function SpeakPanel({ getEditorText, active }) {
   )
 }
 
-function TranslatePanel({ getEditorHtml }) {
+function TranslatePanel({ getEditorHtml, active }) {
   const [translation, setTranslation] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -185,12 +194,13 @@ function TranslatePanel({ getEditorHtml }) {
     }
   }
 
-  useEffect(() => { run() }, [])
+  useEffect(() => {
+    if (active) run()
+  }, [active])
 
   return (
     <div className="panel-bar translate-panel">
-      <div className="translate-header">
-        <label>English translation</label>
+      <div className="translate-controls">
         <button className="retranslate-btn" onClick={() => run(true)} disabled={loading}>↺ Re-translate</button>
       </div>
       {loading && <p className="translate-status">Translating…</p>}
@@ -226,10 +236,17 @@ export default function App() {
   const [dictState, setDictState] = useState({ word: '', results: null, error: null, loading: false })
   const [ctrlHeld, setCtrlHeld] = useState(false)
   const [panelHeight, setPanelHeight] = useState(() => Number(localStorage.getItem('vibeedit-panel-height')) || 220)
+  const [annotations, setAnnotations] = useState([])
+  const [user, setUser] = useState(null)
+  const [view, setView] = useState('editor')
   const hideTimer = useRef(null)
   const saveTimer = useRef(null)
   const dragState = useRef(null)
   const panelContentRef = useRef(null)
+
+  useEffect(() => {
+    fetch('/api/me').then(r => r.json()).then(d => setUser(d)).catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!panelContentRef.current) return
@@ -237,7 +254,7 @@ export default function App() {
       if (dragState.current) return
       const contentHeight = entries[0].contentRect.height
       if (contentHeight === 0) return
-      setPanelHeight(Math.min(contentHeight, window.innerHeight / 2))
+      setPanelHeight(Math.min(contentHeight, window.innerHeight * 0.45))
     })
     ro.observe(panelContentRef.current)
     return () => ro.disconnect()
@@ -280,12 +297,22 @@ export default function App() {
       },
     },
     onUpdate({ editor }) {
+      setTooltip(null)
       clearTimeout(saveTimer.current)
       saveTimer.current = setTimeout(() => {
         localStorage.setItem('vibeedit-content', editor.getHTML())
       }, 500)
     },
   })
+
+  const dismissAnnotation = useCallback((message) => {
+    setAnnotations(prev => {
+      const next = prev.filter(a => a.message !== message)
+      editor?.commands.setAnnotations(next)
+      return next
+    })
+    setTooltip(null)
+  }, [editor])
 
   const handlePanelToggle = (panel) => {
     setActivePanel(prev => {
@@ -294,6 +321,17 @@ export default function App() {
       return next
     })
   }
+
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape' && activePanel && activePanel !== 'check') {
+        setActivePanel(null)
+        editor?.commands.focus()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [activePanel, editor])
 
   useEffect(() => {
     const saved = localStorage.getItem(`vibeedit-prompt-${lang}`)
@@ -325,13 +363,14 @@ export default function App() {
   const handleCheck = useCallback(async () => {
     setChecking(true)
     setError(null)
+    setAnnotations([])
     editor.commands.setAnnotations([])
 
     const text = editor.getText()
     const langLabel = LANGUAGES.find(l => l.code === lang)?.label ?? lang
     const expandedPrompt = prompt.replace(/\{\{language\}\}/g, langLabel)
     if (!expandedPrompt.trim()) {
-      setError('No review prompt configured. Open the Prompt panel to set one.')
+      setError('No chat prompt configured. Open Settings to set one.')
       setChecking(false)
       return
     }
@@ -343,6 +382,7 @@ export default function App() {
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
+      setAnnotations(data.annotations)
       editor.commands.setAnnotations(data.annotations)
     } catch (err) {
       setError(err.message)
@@ -389,9 +429,13 @@ export default function App() {
     if (!el) return
     clearTimeout(hideTimer.current)
     const rect = el.getBoundingClientRect()
+    const flipped = rect.bottom > window.innerHeight * 0.6
     setTooltip({
       x: rect.left + window.scrollX,
-      y: rect.bottom + window.scrollY + 6,
+      y: flipped
+        ? rect.top + window.scrollY
+        : rect.bottom + window.scrollY + 6,
+      flipped,
       message: el.getAttribute('data-message'),
     })
   }
@@ -401,76 +445,116 @@ export default function App() {
     hideTimer.current = setTimeout(() => setTooltip(null), 100)
   }
 
+  const panelVisible = activePanel && activePanel !== 'check'
+  const expandedPrompt = prompt.replace(/\{\{language\}\}/g, LANGUAGES.find(l => l.code === lang)?.label ?? lang)
+
   return (
     <div className="container">
       <div className="title-bar">
         <h1>VibeEdit</h1>
-        <select className="lang-picker" value={lang} onChange={e => handleLangChange(e.target.value)}>
-          {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
-        </select>
-      </div>
-      <div className="editor-wrapper">
-        <MenuBar
-          editor={editor}
-          onCheck={handleCheck}
-          checking={checking}
-          activePanel={activePanel}
-          onPanelToggle={handlePanelToggle}
-          ctrlHeld={ctrlHeld}
-        />
-        <div
-          className="panel-container"
-          style={{ display: activePanel && activePanel !== 'check' ? undefined : 'none', height: panelHeight }}
-        >
-          <div ref={panelContentRef}>
-          {activePanel === 'prompt' && (
-            <div className="panel-bar" style={{ height: panelHeight }}>
-              <label htmlFor="prompt">Review prompt <span className="prompt-hint">(use <code>{'{{language}}'}</code> to insert the selected language)</span></label>
-              <textarea
-                id="prompt"
-                value={prompt}
-                onChange={handlePromptChange}
-                autoFocus
-              />
+        {view === 'editor' && (
+          <span className="lang-display">{LANGUAGES.find(l => l.code === lang)?.label}</span>
+        )}
+        <div className="title-bar-right">
+          {user && (
+            <div className="user-badge">
+              <span className="user-email">{user.email}</span>
+              <button
+                className={`settings-gear-btn${view === 'settings' ? ' settings-gear-btn--active' : ''}`}
+                onClick={() => setView(v => v === 'settings' ? 'editor' : 'settings')}
+                title="Settings"
+              >
+                ⚙
+              </button>
+              <a href="/auth/logout" className="logout-link">Sign out</a>
             </div>
           )}
-          {activePanel === 'translate' && (
-            <TranslatePanel getEditorHtml={() => editor.getHTML()} />
-          )}
-          {activePanel === 'conjugate' && <ConjugatePanel state={conjugateState} setState={setConjugateState} lang={lang} />}
-          {activePanel === 'dictionary' && <DictionaryPanel state={dictState} setState={setDictState} lang={lang} />}
-          <div style={{ display: activePanel === 'speak' ? undefined : 'none' }}>
-            <SpeakPanel getEditorText={() => editor.getText()} active={activePanel === 'speak'} />
-          </div>
-          <div style={{ display: activePanel === 'chat' ? undefined : 'none' }}>
-            <ChatPanel getEditorText={() => editor.getText()} history={chatHistory} setHistory={setChatHistory} active={activePanel === 'chat'} prompt={prompt.replace(/\{\{language\}\}/g, LANGUAGES.find(l => l.code === lang)?.label ?? lang)} />
-          </div>
-          </div>
-        </div>
-        {activePanel && activePanel !== 'check' && (
-          <div
-            className="resize-handle"
-            onMouseDown={(e) => {
-              dragState.current = { startY: e.clientY, startHeight: panelHeight }
-              document.body.style.cursor = 'row-resize'
-              document.body.style.userSelect = 'none'
-              e.preventDefault()
-            }}
-          />
-        )}
-        <div className="editor-area" onMouseOver={handleMouseOver} onMouseOut={handleMouseOut} spellCheck={false} autoCorrect="off" autoCapitalize="off">
-          <EditorContent editor={editor} className="editor-content" />
         </div>
       </div>
+      {view === 'settings' ? (
+        <SettingsPage
+          lang={lang}
+          languages={LANGUAGES}
+          onLangChange={handleLangChange}
+          prompt={prompt}
+          onPromptChange={handlePromptChange}
+          onBack={() => setView('editor')}
+        />
+      ) : (
+        <div className="editor-wrapper">
+          <MenuBar
+            editor={editor}
+            onCheck={handleCheck}
+            checking={checking}
+            activePanel={activePanel}
+            onPanelToggle={handlePanelToggle}
+            ctrlHeld={ctrlHeld}
+          />
+          {panelVisible && (
+            <div className="panel-header">
+              <div className="panel-header-left">
+                <span className="panel-title">{PANEL_TITLES[activePanel]}</span>
+              </div>
+              <div className="panel-header-right">
+                {activePanel === 'chat' && chatHistory.length > 0 && (
+                  <button className="panel-secondary-btn" onClick={() => setChatHistory([])}>Clear chat</button>
+                )}
+                <button
+                  className="panel-close-btn"
+                  onClick={() => handlePanelToggle(activePanel)}
+                  title="Close panel"
+                >×</button>
+              </div>
+            </div>
+          )}
+          <div
+            className="panel-container"
+            style={{ display: panelVisible ? undefined : 'none', height: panelHeight }}
+          >
+            <div ref={panelContentRef}>
+              <div style={{ display: activePanel === 'translate' ? undefined : 'none' }}>
+                <TranslatePanel getEditorHtml={() => editor?.getHTML()} active={activePanel === 'translate'} />
+              </div>
+              {activePanel === 'conjugate' && <ConjugatePanel state={conjugateState} setState={setConjugateState} lang={lang} />}
+              {activePanel === 'dictionary' && <DictionaryPanel state={dictState} setState={setDictState} lang={lang} />}
+              <div style={{ display: activePanel === 'speak' ? undefined : 'none' }}>
+                <SpeakPanel getEditorText={() => editor?.getText()} active={activePanel === 'speak'} />
+              </div>
+              <div style={{ display: activePanel === 'chat' ? undefined : 'none' }}>
+                <ChatPanel getEditorText={() => editor?.getText()} history={chatHistory} setHistory={setChatHistory} active={activePanel === 'chat'} prompt={expandedPrompt} />
+              </div>
+            </div>
+          </div>
+          {panelVisible && (
+            <div
+              className="resize-handle"
+              onMouseDown={(e) => {
+                dragState.current = { startY: e.clientY, startHeight: panelHeight }
+                document.body.style.cursor = 'row-resize'
+                document.body.style.userSelect = 'none'
+                e.preventDefault()
+              }}
+            />
+          )}
+          <div className="editor-area" onMouseOver={handleMouseOver} onMouseOut={handleMouseOut} spellCheck={false} autoCorrect="off" autoCapitalize="off">
+            <EditorContent editor={editor} className="editor-content" />
+          </div>
+        </div>
+      )}
       {error && <div className="error-banner">{error}</div>}
       {tooltip && (
         <div
-          className="error-tooltip"
+          className={`error-tooltip${tooltip.flipped ? ' error-tooltip--flipped' : ''}`}
           style={{ left: tooltip.x, top: tooltip.y }}
           onMouseOver={() => clearTimeout(hideTimer.current)}
           onMouseOut={() => { hideTimer.current = setTimeout(() => setTooltip(null), 100) }}
         >
-          {tooltip.message}
+          <span className="tooltip-message">{tooltip.message}</span>
+          <button
+            className="tooltip-dismiss"
+            onClick={(e) => { e.stopPropagation(); dismissAnnotation(tooltip.message) }}
+            title="Dismiss this suggestion"
+          >×</button>
         </div>
       )}
     </div>
