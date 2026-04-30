@@ -20,3 +20,8 @@
  - do we have a limit to prevent a HUGE chat history from chewing up token usage?
  - feature: token usage indicator / cost estimator
  - better error message when word isn't found in conjugation tool
+ - make it so you can add users without having to re-start
+ - pt conjugation tool is missing conditional!
+ - button to reset chat
+ - log all LLM interactions, expose in UI
+ - save / backup?

@@ -749,6 +749,16 @@ h1 {
   color: #444;
 }
 
+.dict-word-link {
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+
+.dict-word-link:hover {
+  color: #4a90e2;
+}
+
 .editor-content .tiptap pre {
   background: #f0f0f0;
   padding: 12px;

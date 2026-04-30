@@ -1,6 +1,16 @@
 import { useState } from 'react'
 
-function DictResult({ result }) {
+const WORD_RE = /([A-Za-zÀ-ɏ]+(?:['’-][A-Za-zÀ-ɏ]+)*)/
+
+function clickableText(text, onWordClick) {
+  return text.split(WORD_RE).map((part, i) =>
+    i % 2 === 1
+      ? <span key={i} className="dict-word-link" onClick={() => onWordClick(part)}>{part}</span>
+      : part
+  )
+}
+
+function DictResult({ result, onWordClick }) {
   return (
     <div className="dict-result">
       <div className="dict-result-header">
@@ -13,14 +23,14 @@ function DictResult({ result }) {
             {sec.senses.map((s, i) => (
               <li key={i} className="dict-sense">
                 {s.context && <span className="dict-context">({s.context}) </span>}
-                <span className="dict-trans">{s.trans}</span>
+                <span className="dict-trans">{clickableText(s.trans, onWordClick)}</span>
                 {s.examples.length > 0 && (
                   <ul className="dict-examples">
                     {s.examples.map((ex, j) => (
                       <li key={j} className="dict-example">
-                        <span className="dict-ex-src">{ex.src}</span>
+                        <span className="dict-ex-src">{clickableText(ex.src, onWordClick)}</span>
                         <span className="dict-ex-sep"> ▸ </span>
-                        <span className="dict-ex-tgt">{ex.tgt}</span>
+                        <span className="dict-ex-tgt">{clickableText(ex.tgt, onWordClick)}</span>
                       </li>
                     ))}
                   </ul>
@@ -59,6 +69,11 @@ export default function DictionaryPanel({ state, setState, lang }) {
     if (input.trim()) lookup(input.trim())
   }
 
+  const handleWordClick = (w) => {
+    setInput(w)
+    lookup(w)
+  }
+
   return (
     <div className="panel-bar dict-panel">
       <label>Dictionary</label>
@@ -76,7 +91,7 @@ export default function DictionaryPanel({ state, setState, lang }) {
       {error && <p className="dict-status dict-error">{error}</p>}
       {results && (
         <div className="dict-results-list">
-          {results.map((r, i) => <DictResult key={i} result={r} />)}
+          {results.map((r, i) => <DictResult key={i} result={r} onWordClick={handleWordClick} />)}
         </div>
       )}
     </div>
