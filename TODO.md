@@ -3,6 +3,7 @@
  - enhance dictionary to show entries where the search term is part of the entry name (house -> house call, house guest, house-hunt, etc.)
  - bug: dictionary feature only finds first definition.  Cow, for example, has a noun entry and a transitive verb entry.
  - bug: noun genders aren't being displayed
+ - bug: why isn't ecrã found?  in the mac Dictionary app, it's "écran, ecrã" so maybe something about being the second definition?
  - copy to clipboard feature!
  - admin area with user config (to grant others access)
  - change the "prompt" button into a settings page.  add the ability to customize the instructions given to the "chat" feature.
@@ -15,15 +16,12 @@
  - better error message when word isn't found in conjugation tool
  - make it so you can add users without having to re-start
  - pt conjugation tool is missing conditional!
- - log all LLM interactions, expose in UI
  - save / backup?
-
-
- - make links in dictionary to other words
- - larger chat window for long questions (multi-line?)
- - hide the pop-up when the blue squiggly is removed?
- - add an "x" to dismiss a squiggly without changing it?
- - resizing doesn't grow/shrink the translation window
- - bug: the pop-up with corrections from pressing the "check" button isn't fully visible when the correction is close to the bottom of the window.
- - button to reset chat
- - translate feature doesn't cache; re-translates every time the window opens
+ - dictionary: don't link the word back to itself
+ - turn the username/settings/logout into a drop menu with settings and logout as options
+ - move the re-translate button up by the "close" box to save vertical space
+ - a little animation in the "check" button when it's working?  maybe another animation for when it's done?
+ - change column header from "score" to "status"
+ - it's visually incongruous to have the dimension of the tags not match the status/score.
+ - does the baseline of the "edit" button align with the text of source/target/etc?
+ - can we tighten up the list a little, place the rows closer together?
