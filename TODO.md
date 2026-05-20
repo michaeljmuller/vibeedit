@@ -25,3 +25,7 @@
  - it's visually incongruous to have the dimension of the tags not match the status/score.
  - does the baseline of the "edit" button align with the text of source/target/etc?
  - can we tighten up the list a little, place the rows closer together?
+ - idea: have "escape" in the editor window close the panel
+ - handle bad JSON from "check" function.  retry?  (Unexpected token 'I', "I'll analy"... is not valid JSON)  not using output_config?
+ - when there's an error (like 529) from chat, put the submitted text back in the chat input text.  OR display it as sent and show the error in the chat window.
+ - try a side-by-side mode
