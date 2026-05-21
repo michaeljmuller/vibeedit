@@ -1,3 +1,34 @@
+MAY 20, 2026
+------------
+
+Bugs fixed:
+- Conjugate: condicional and infinitivo pessoal tenses were missing; the
+  Portuguese scraper now captures tables that fall outside any h2 section
+  in the source HTML
+
+New features:
+- _SINGLE_USER_EMAIL environment variable bypasses Google OAuth and
+  auto-logs in as a fixed email address, useful for single-user deployments
+- Conjugate sections (Indicativo, Imperativo, etc.) are now collapsible;
+  click a section heading to show or hide its tenses
+
+Layout:
+- Panels (Chat, Translate, Conjugate, Dictionary, Speak) now open to the
+  right of the editor in a side-by-side layout instead of above it; the
+  editor always shows at full height regardless of which panel is open
+- Panel width is stored as a viewport ratio so the default 50/50 split is
+  consistent across screen sizes; drag the handle to resize
+- Panel buttons (Chat, Translate, etc.) are right-aligned in the toolbar
+
+Aesthetics:
+- Panel background: uniform tinted background across the full panel column,
+  not just the content area
+- All action buttons inside panels are now blue, consistent with Check
+- Conjugation tables: compact equal-width columns using CSS grid; tense
+  names inline as header rows; section headings bold with a collapse arrow
+- Chat: Send button aligns correctly with the textarea in all browsers
+- Audio (Speak): autoPlay attribute added for better Safari compatibility
+
 APRIL 29, 2026
 --------------
 
