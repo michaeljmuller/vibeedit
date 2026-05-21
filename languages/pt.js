@@ -27,26 +27,49 @@ function parseCell($, td) {
   return { pronoun, stem, suffix, className }
 }
 
+function parseTenses($, tableSelector) {
+  const tenses = []
+  tableSelector.each(function () {
+    const name = $(this).find('caption').text().trim()
+    const rows = []
+    $(this).find('tr').each(function () {
+      const cells = []
+      $(this).find('td').each(function () {
+        const cell = parseCell($, this)
+        if (cell) cells.push(cell)
+      })
+      if (cells.length) rows.push(cells)
+    })
+    if (rows.length) tenses.push({ name, rows })
+  })
+  return tenses
+}
+
 function scrapeConjugations($) {
+  const capturedEls = new Set()
   const sections = []
+
   $('main h2').each(function () {
     const heading = $(this).text().trim()
-    const tenses = []
-    $(this).closest('div').find('table').each(function () {
-      const name = $(this).find('caption').text().trim()
-      const rows = []
-      $(this).find('tr').each(function () {
-        const cells = []
-        $(this).find('td').each(function () {
-          const cell = parseCell($, this)
-          if (cell) cells.push(cell)
-        })
-        if (cells.length) rows.push(cells)
-      })
-      if (rows.length) tenses.push({ name, rows })
-    })
+    const tables = $(this).closest('div').find('table')
+    tables.each(function () { capturedEls.add(this) })
+    const tenses = parseTenses($, tables)
     if (tenses.length) sections.push({ heading, tenses })
   })
+
+  // Collect tables not reached by any h2 (e.g. condicional, infinitivo pessoal)
+  const orphanTables = $('main table').filter(function () { return !capturedEls.has(this) })
+  const orphanTenses = parseTenses($, orphanTables)
+  if (orphanTenses.length) {
+    const imperativoIdx = sections.findIndex(s => s.heading.toLowerCase() === 'imperativo')
+    const orphanSection = { heading: 'Condicional', tenses: orphanTenses }
+    if (imperativoIdx >= 0) {
+      sections.splice(imperativoIdx + 1, 0, orphanSection)
+    } else {
+      sections.push(orphanSection)
+    }
+  }
+
   return sections
 }
 

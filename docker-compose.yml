@@ -13,5 +13,6 @@ services:
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL:-http://localhost:3000/auth/google/callback}
       - SESSION_SECRET=${SESSION_SECRET}
+      - _SINGLE_USER_EMAIL=${_SINGLE_USER_EMAIL:-}
     volumes:
       - ./config/allowed-emails.txt:/config/allowed-emails.txt:ro

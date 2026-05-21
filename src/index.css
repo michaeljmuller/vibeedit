@@ -16,7 +16,7 @@ body {
 
 .container {
   height: 100%;
-  max-width: 860px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 20px 20px 16px;
   display: flex;
@@ -129,6 +129,13 @@ h1 {
   overflow: hidden;
 }
 
+.editor-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+}
+
 /* ── Menu bar ─────────────────────────────────────────────────────────────── */
 
 .menu-bar {
@@ -225,8 +232,7 @@ h1 {
   align-items: center;
   justify-content: space-between;
   padding: 6px 14px 6px 16px;
-  background: #f5f7fa;
-  border-bottom: 1px solid #e8e8e8;
+  border-bottom: 1px solid #dde2ea;
   flex-shrink: 0;
   animation: panel-fade-in 0.12s ease-out;
 }
@@ -273,15 +279,15 @@ h1 {
 .panel-secondary-btn {
   font-size: 12px;
   padding: 2px 8px;
-  border: 1px solid #ddd;
+  border: none;
   border-radius: 4px;
-  background: #fff;
+  background: #1a73e8;
   cursor: pointer;
-  color: #555;
+  color: #fff;
 }
 
 .panel-secondary-btn:hover {
-  background: #f0f0f0;
+  background: #1557b0;
 }
 
 .panel-close-btn {
@@ -306,19 +312,33 @@ h1 {
   color: #333;
 }
 
+/* ── Panel column ─────────────────────────────────────────────────────────── */
+
+.panel-column {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  min-height: 0;
+  border-left: 1px solid #dde2ea;
+  background: #edf0f8;
+}
+
 /* ── Panel container ──────────────────────────────────────────────────────── */
 
 .panel-container {
-  flex-shrink: 0;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ── Resize handle ────────────────────────────────────────────────────────── */
 
 .resize-handle {
-  height: 8px;
+  width: 8px;
   flex-shrink: 0;
-  cursor: row-resize;
+  cursor: col-resize;
   background: #ebebeb;
   transition: background 0.15s;
   display: flex;
@@ -329,12 +349,12 @@ h1 {
 .resize-handle::after {
   content: '';
   display: block;
-  width: 28px;
-  height: 3px;
+  width: 3px;
+  height: 28px;
   border-radius: 2px;
   background: transparent;
-  border-top: 1px solid #ccc;
-  border-bottom: 1px solid #ccc;
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
 }
 
 .resize-handle:hover {
@@ -349,6 +369,7 @@ h1 {
 
 .editor-area {
   flex: 1;
+  min-width: 300px;
   min-height: 0;
   overflow-y: auto;
 }
@@ -412,7 +433,6 @@ h1 {
 
 .panel-bar {
   padding: 12px 16px;
-  background: #fafafa;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -465,11 +485,11 @@ h1 {
 .retranslate-btn {
   font-size: 12px;
   padding: 3px 9px;
-  border: 1px solid #ddd;
+  border: none;
   border-radius: 5px;
-  background: #fff;
+  background: #1a73e8;
   cursor: pointer;
-  color: #555;
+  color: #fff;
 }
 
 .retranslate-btn:disabled {
@@ -478,7 +498,7 @@ h1 {
 }
 
 .retranslate-btn:hover:not(:disabled) {
-  background: #f0f0f0;
+  background: #1557b0;
 }
 
 .translate-status {
@@ -526,14 +546,14 @@ h1 {
 .regen-btn {
   font-size: 12px;
   padding: 3px 9px;
-  border: 1px solid #ddd;
+  border: none;
   border-radius: 5px;
-  background: #fff;
+  background: #1a73e8;
   cursor: pointer;
-  color: #555;
+  color: #fff;
 }
 .regen-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.regen-btn:hover:not(:disabled) { background: #f0f0f0; }
+.regen-btn:hover:not(:disabled) { background: #1557b0; }
 
 .speak-status {
   font-size: 13px;
@@ -554,27 +574,28 @@ h1 {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 1px solid #ccc;
-  background: #fff;
+  border: none;
+  background: #1a73e8;
+  color: #fff;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
-.speak-playpause:hover { background: #f0f0f0; }
+.speak-playpause:hover { background: #1557b0; }
 
 .speak-skip {
   font-size: 12px;
   padding: 4px 8px;
-  border: 1px solid #ddd;
+  border: none;
   border-radius: 5px;
-  background: #fff;
+  background: #1a73e8;
   cursor: pointer;
-  color: #555;
+  color: #fff;
   white-space: nowrap;
 }
-.speak-skip:hover { background: #f0f0f0; }
+.speak-skip:hover { background: #1557b0; }
 
 .speak-progress {
   flex: 1;
@@ -617,12 +638,16 @@ h1 {
 
 .conjugate-input-row button {
   padding: 6px 14px;
-  background: #333;
+  background: #1a73e8;
   color: #fff;
   border: none;
   border-radius: 6px;
   font-size: 14px;
   cursor: pointer;
+}
+
+.conjugate-input-row button:hover:not(:disabled) {
+  background: #1557b0;
 }
 
 .conjugate-input-row button:disabled {
@@ -631,41 +656,73 @@ h1 {
 }
 
 .conj-output {
-  overflow-x: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.conj-group {
+  display: flex;
+  flex-direction: column;
 }
 
 .conj-section {
-  margin-bottom: 16px;
-}
-
-.conj-heading {
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: #666;
-  margin: 0 0 8px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid #ebebeb;
-}
-
-.conj-tenses {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 8px;
 }
 
-.conj-table {
-  border-collapse: collapse;
+.conj-heading {
   font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #333;
+  margin: 0 0 8px;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.conj-table caption {
+.conj-heading:hover {
+  color: #333;
+}
+
+.conj-heading-arrow {
+  font-size: 26px;
+  line-height: 1;
+  transition: transform 0.15s;
+  display: inline-block;
+}
+
+.conj-heading-arrow.collapsed {
+  transform: rotate(-90deg);
+}
+
+.conj-table {
+  font-size: 13px;
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.conj-table tbody,
+.conj-table tr {
+  display: contents;
+}
+
+.conj-tense-name {
+  grid-column: 1 / -1;
   font-weight: 600;
-  text-align: left;
-  padding: 0 0 4px;
   font-size: 12px;
   color: #444;
+  padding: 2px 8px 2px;
+}
+
+.conj-tense-name.conj-tense-gap {
+  padding-top: 12px;
 }
 
 .conj-cell {
@@ -708,11 +765,15 @@ h1 {
 /* ── Chat panel ───────────────────────────────────────────────────────────── */
 
 .chat-panel {
+  flex: 1;
+  min-height: 0;
   gap: 0;
   padding: 0;
 }
 
 .chat-messages {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 14px 16px;
   display: flex;
@@ -801,7 +862,7 @@ h1 {
   gap: 8px;
   padding: 10px 12px;
   border-top: 1px solid #eee;
-  align-items: flex-end;
+  align-items: center;
 }
 
 .chat-textarea {
@@ -833,8 +894,6 @@ h1 {
   font-size: 14px;
   cursor: pointer;
   flex-shrink: 0;
-  align-self: flex-end;
-  height: 36px;
 }
 
 .chat-input-row button:disabled {
@@ -937,12 +996,16 @@ h1 {
 
 .dict-input-row button {
   padding: 6px 14px;
-  background: #333;
+  background: #1a73e8;
   color: #fff;
   border: none;
   border-radius: 6px;
   font-size: 14px;
   cursor: pointer;
+}
+
+.dict-input-row button:hover:not(:disabled) {
+  background: #1557b0;
 }
 
 .dict-input-row button:disabled {
@@ -1217,4 +1280,19 @@ h1 {
   resize: none;
   white-space: pre;
   overflow-wrap: normal;
+}
+
+@media (max-width: 800px) {
+  .editor-body {
+    flex-direction: column;
+  }
+  .panel-column {
+    width: 100% !important;
+    border-left: none;
+    border-top: 1px solid #e8e8e8;
+    max-height: 40vh;
+  }
+  .resize-handle {
+    display: none;
+  }
 }

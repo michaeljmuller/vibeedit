@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 function ConjugateCell({ cell }) {
   const { pronoun, stem, suffix, className } = cell
   const formEl = suffix
@@ -11,44 +13,66 @@ function ConjugateCell({ cell }) {
   )
 }
 
-function ConjugateTable({ tense }) {
+function ConjugateSection({ section }) {
+  const validTenses = section.tenses.filter(t => t.rows?.length > 0)
+  if (validTenses.length === 0) return null
+  const colCount = validTenses[0]?.rows[0]?.length ?? 1
   return (
     <table className="conj-table">
-      {tense.name && <caption>{tense.name}</caption>}
       <tbody>
-        {tense.rows.map((row, i) => (
-          <tr key={i}>
-            {row.map((cell, j) => <ConjugateCell key={j} cell={cell} />)}
-          </tr>
-        ))}
+        {validTenses.flatMap((tense, ti) => [
+          tense.name ? (
+            <tr key={`h-${ti}`}>
+              <td colSpan={colCount} className={`conj-tense-name${ti > 0 ? ' conj-tense-gap' : ''}`}>{tense.name}</td>
+            </tr>
+          ) : null,
+          ...tense.rows.map((row, ri) => (
+            <tr key={`${ti}-${ri}`}>
+              {row.map((cell, ci) => <ConjugateCell key={ci} cell={cell} />)}
+            </tr>
+          )),
+        ].filter(Boolean))}
       </tbody>
     </table>
   )
 }
 
-function ConjugateSection({ section, showHeading }) {
-  const validTenses = section.tenses.filter(t => t.rows?.length > 0)
-  if (validTenses.length === 0) return null
+function ConjugateGroup({ heading, sections }) {
+  const [collapsed, setCollapsed] = useState(false)
   return (
-    <div className="conj-section">
-      {showHeading && <h3 className="conj-heading">{section.heading}</h3>}
-      <div className="conj-tenses">
-        {validTenses.map((tense, i) => <ConjugateTable key={i} tense={tense} />)}
-      </div>
+    <div className="conj-group">
+      <h3 className="conj-heading" onClick={() => setCollapsed(c => !c)}>
+        <span className={`conj-heading-arrow${collapsed ? ' collapsed' : ''}`}>▾</span>
+        {heading}
+      </h3>
+      {!collapsed && (
+        <div className="conj-section">
+          {sections.map((section, i) => (
+            <ConjugateSection key={i} section={section} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
 
 export function Results({ sections }) {
   const visible = sections.filter(s => s.tenses.some(t => t.rows?.length > 0))
+
+  const groups = []
+  for (const section of visible) {
+    const last = groups[groups.length - 1]
+    if (!last || last.heading !== section.heading) {
+      groups.push({ heading: section.heading, sections: [section] })
+    } else {
+      last.sections.push(section)
+    }
+  }
+
   return (
     <div className="conj-output">
-      {visible.map((section, i) => (
-        <ConjugateSection
-          key={i}
-          section={section}
-          showHeading={i === 0 || visible[i - 1].heading !== section.heading}
-        />
+      {groups.map((group, i) => (
+        <ConjugateGroup key={i} heading={group.heading} sections={group.sections} />
       ))}
     </div>
   )

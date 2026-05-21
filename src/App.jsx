@@ -45,7 +45,7 @@ const MenuBar = ({ editor, onCheck, checking, activePanel, onPanelToggle, ctrlHe
       <button onClick={onCheck} disabled={checking} className={`check-btn${ctrlHeld ? ' hotkey-hint' : ''}`}>
         {checking ? 'Checking…' : label(0, 'Check')}
       </button>
-      <span className="divider" />
+      <span style={{ flex: 1 }} />
       {PANELS.slice(1).map((p, i) => (
         <button
           key={p.id}
@@ -146,7 +146,8 @@ function SpeakPanel({ getEditorText, active }) {
             onPause={() => setIsPlaying(false)}
             onEnded={() => setIsPlaying(false)}
             onTimeUpdate={e => setCurrentTime(e.target.currentTime)}
-            onLoadedMetadata={e => { setDuration(e.target.duration); e.target.play() }}
+            autoPlay
+            onLoadedMetadata={e => { setDuration(e.target.duration); e.target.play().catch(() => {}) }}
           />
           <div className="speak-controls">
             <button className="speak-skip" onClick={() => skip(-10)}>«10s</button>
@@ -235,43 +236,31 @@ export default function App() {
   const [conjugateState, setConjugateState] = useState({ verb: '', sections: null, error: null })
   const [dictState, setDictState] = useState({ word: '', results: null, error: null, loading: false })
   const [ctrlHeld, setCtrlHeld] = useState(false)
-  const [panelHeight, setPanelHeight] = useState(() => Number(localStorage.getItem('vibeedit-panel-height')) || 220)
+  const [panelWidthRatio, setPanelWidthRatio] = useState(() => Number(localStorage.getItem('vibeedit-panel-width-ratio')) || 0.5)
+  const panelWidth = Math.floor(panelWidthRatio * window.innerWidth)
   const [annotations, setAnnotations] = useState([])
   const [user, setUser] = useState(null)
   const [view, setView] = useState('editor')
   const hideTimer = useRef(null)
   const saveTimer = useRef(null)
   const dragState = useRef(null)
-  const panelContentRef = useRef(null)
 
   useEffect(() => {
     fetch('/api/me').then(r => r.json()).then(d => setUser(d)).catch(() => {})
   }, [])
 
   useEffect(() => {
-    if (!panelContentRef.current) return
-    const ro = new ResizeObserver(entries => {
-      if (dragState.current) return
-      const contentHeight = entries[0].contentRect.height
-      if (contentHeight === 0) return
-      setPanelHeight(Math.min(contentHeight, window.innerHeight * 0.45))
-    })
-    ro.observe(panelContentRef.current)
-    return () => ro.disconnect()
-  }, [])
-
-  useEffect(() => {
     const onMouseMove = (e) => {
       if (!dragState.current) return
-      const delta = e.clientY - dragState.current.startY
-      const next = Math.max(80, Math.min(600, dragState.current.startHeight + delta))
-      setPanelHeight(next)
+      const delta = e.clientX - dragState.current.startX
+      const next = Math.max(200 / window.innerWidth, Math.min(0.65, dragState.current.startRatio - delta / window.innerWidth))
+      setPanelWidthRatio(next)
     }
     const onMouseUp = (e) => {
       if (!dragState.current) return
-      const delta = e.clientY - dragState.current.startY
-      const final = Math.max(80, Math.min(600, dragState.current.startHeight + delta))
-      localStorage.setItem('vibeedit-panel-height', String(Math.round(final)))
+      const delta = e.clientX - dragState.current.startX
+      const final = Math.max(200 / window.innerWidth, Math.min(0.65, dragState.current.startRatio - delta / window.innerWidth))
+      localStorage.setItem('vibeedit-panel-width-ratio', String(final))
       dragState.current = null
       document.body.style.cursor = ''
       document.body.style.userSelect = ''
@@ -490,54 +479,51 @@ export default function App() {
             onPanelToggle={handlePanelToggle}
             ctrlHeld={ctrlHeld}
           />
-          {panelVisible && (
-            <div className="panel-header">
-              <div className="panel-header-left">
-                <span className="panel-title">{PANEL_TITLES[activePanel]}</span>
+          <div className="editor-body">
+            <div className="editor-area" onMouseOver={handleMouseOver} onMouseOut={handleMouseOut} spellCheck={false} autoCorrect="off" autoCapitalize="off">
+              <EditorContent editor={editor} className="editor-content" />
+            </div>
+            {panelVisible && (
+              <div
+                className="resize-handle"
+                onMouseDown={(e) => {
+                  dragState.current = { startX: e.clientX, startRatio: panelWidthRatio }
+                  document.body.style.cursor = 'col-resize'
+                  document.body.style.userSelect = 'none'
+                  e.preventDefault()
+                }}
+              />
+            )}
+            <div className="panel-column" style={{ display: panelVisible ? undefined : 'none', width: panelWidth }}>
+              <div className="panel-header">
+                <div className="panel-header-left">
+                  <span className="panel-title">{PANEL_TITLES[activePanel]}</span>
+                </div>
+                <div className="panel-header-right">
+                  {activePanel === 'chat' && chatHistory.length > 0 && (
+                    <button className="panel-secondary-btn" onClick={() => setChatHistory([])}>Clear chat</button>
+                  )}
+                  <button
+                    className="panel-close-btn"
+                    onClick={() => handlePanelToggle(activePanel)}
+                    title="Close panel"
+                  >×</button>
+                </div>
               </div>
-              <div className="panel-header-right">
-                {activePanel === 'chat' && chatHistory.length > 0 && (
-                  <button className="panel-secondary-btn" onClick={() => setChatHistory([])}>Clear chat</button>
-                )}
-                <button
-                  className="panel-close-btn"
-                  onClick={() => handlePanelToggle(activePanel)}
-                  title="Close panel"
-                >×</button>
+              <div className="panel-container">
+                <div style={{ display: activePanel === 'translate' ? undefined : 'none' }}>
+                  <TranslatePanel getEditorHtml={() => editor?.getHTML()} active={activePanel === 'translate'} />
+                </div>
+                {activePanel === 'conjugate' && <ConjugatePanel state={conjugateState} setState={setConjugateState} lang={lang} />}
+                {activePanel === 'dictionary' && <DictionaryPanel state={dictState} setState={setDictState} lang={lang} />}
+                <div style={{ display: activePanel === 'speak' ? undefined : 'none' }}>
+                  <SpeakPanel getEditorText={() => editor?.getText()} active={activePanel === 'speak'} />
+                </div>
+                <div style={{ display: activePanel === 'chat' ? undefined : 'none' }}>
+                  <ChatPanel getEditorText={() => editor?.getText()} history={chatHistory} setHistory={setChatHistory} active={activePanel === 'chat'} prompt={expandedPrompt} />
+                </div>
               </div>
             </div>
-          )}
-          <div
-            className="panel-container"
-            style={{ display: panelVisible ? undefined : 'none', height: panelHeight }}
-          >
-            <div ref={panelContentRef}>
-              <div style={{ display: activePanel === 'translate' ? undefined : 'none' }}>
-                <TranslatePanel getEditorHtml={() => editor?.getHTML()} active={activePanel === 'translate'} />
-              </div>
-              {activePanel === 'conjugate' && <ConjugatePanel state={conjugateState} setState={setConjugateState} lang={lang} />}
-              {activePanel === 'dictionary' && <DictionaryPanel state={dictState} setState={setDictState} lang={lang} />}
-              <div style={{ display: activePanel === 'speak' ? undefined : 'none' }}>
-                <SpeakPanel getEditorText={() => editor?.getText()} active={activePanel === 'speak'} />
-              </div>
-              <div style={{ display: activePanel === 'chat' ? undefined : 'none' }}>
-                <ChatPanel getEditorText={() => editor?.getText()} history={chatHistory} setHistory={setChatHistory} active={activePanel === 'chat'} prompt={expandedPrompt} />
-              </div>
-            </div>
-          </div>
-          {panelVisible && (
-            <div
-              className="resize-handle"
-              onMouseDown={(e) => {
-                dragState.current = { startY: e.clientY, startHeight: panelHeight }
-                document.body.style.cursor = 'row-resize'
-                document.body.style.userSelect = 'none'
-                e.preventDefault()
-              }}
-            />
-          )}
-          <div className="editor-area" onMouseOver={handleMouseOver} onMouseOut={handleMouseOut} spellCheck={false} autoCorrect="off" autoCapitalize="off">
-            <EditorContent editor={editor} className="editor-content" />
           </div>
         </div>
       )}

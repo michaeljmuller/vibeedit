@@ -28,6 +28,8 @@ if (!process.env.ANTHROPIC_API_KEY || !process.env.OPENAI_API_KEY) {
 }
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
+const SINGLE_USER_EMAIL = process.env._SINGLE_USER_EMAIL?.trim().toLowerCase() || null
+
 const app = express()
 app.use(express.json())
 
@@ -83,10 +85,16 @@ app.get('/auth/google/callback',
   })(req, res, next)
 )
 app.get('/auth/logout', (req, res) => {
-  req.logout(() => res.redirect('/login'))
+  req.logout(() => res.redirect(SINGLE_USER_EMAIL ? '/' : '/login'))
 })
 app.get('/login', (req, res) => {
   if (req.isAuthenticated()) return res.redirect('/')
+  if (SINGLE_USER_EMAIL) {
+    return req.logIn({ email: SINGLE_USER_EMAIL }, err => {
+      if (err) console.error('Single-user login error:', err)
+      res.redirect('/')
+    })
+  }
   res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -143,6 +151,12 @@ app.get('/login', (req, res) => {
 
 function requireAuth(req, res, next) {
   if (req.isAuthenticated()) return next()
+  if (SINGLE_USER_EMAIL) {
+    return req.logIn({ email: SINGLE_USER_EMAIL }, err => {
+      if (err) return next(err)
+      next()
+    })
+  }
   if (req.path.startsWith('/api/')) return res.status(401).json({ error: 'Unauthorized' })
   res.redirect('/login')
 }
