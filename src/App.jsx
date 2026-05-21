@@ -32,6 +32,52 @@ const PANEL_TITLES = {
   speak:      'Text to Speech',
 }
 
+const UserMenu = ({ user, isSettingsActive, onSettingsClick }) => {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const initials = (user.email || '?').slice(0, 2).toUpperCase()
+
+  return (
+    <div className="user-menu" ref={ref}>
+      <button
+        className={`user-menu-trigger${open ? ' user-menu-trigger--open' : ''}`}
+        onClick={() => setOpen(v => !v)}
+        aria-haspopup="true"
+        aria-expanded={open}
+      >
+        <span className="user-avatar">{initials}</span>
+        <span className="user-menu-email">{user.email}</span>
+        <span className="user-menu-chevron">{open ? '▲' : '▼'}</span>
+      </button>
+      {open && (
+        <div className="user-menu-dropdown">
+          <div className="user-menu-header">
+            <span className="user-menu-header-avatar">{initials}</span>
+            <span className="user-menu-header-email">{user.email}</span>
+          </div>
+          <div className="user-menu-divider" />
+          <button
+            className={`user-menu-item${isSettingsActive ? ' user-menu-item--active' : ''}`}
+            onClick={() => { onSettingsClick(); setOpen(false) }}
+          >
+            <span className="user-menu-item-icon user-menu-item-icon--gear">⚙</span> Settings
+          </button>
+          <a href="/auth/logout" className="user-menu-item user-menu-item--logout">
+            <span className="user-menu-item-icon">→</span> Sign out
+          </a>
+        </div>
+      )}
+    </div>
+  )
+}
+
 const MenuBar = ({ editor, onCheck, checking, activePanel, onPanelToggle, ctrlHeld }) => {
   if (!editor) return null
 
@@ -446,17 +492,11 @@ export default function App() {
         )}
         <div className="title-bar-right">
           {user && (
-            <div className="user-badge">
-              <span className="user-email">{user.email}</span>
-              <button
-                className={`settings-gear-btn${view === 'settings' ? ' settings-gear-btn--active' : ''}`}
-                onClick={() => setView(v => v === 'settings' ? 'editor' : 'settings')}
-                title="Settings"
-              >
-                ⚙
-              </button>
-              <a href="/auth/logout" className="logout-link">Sign out</a>
-            </div>
+            <UserMenu
+              user={user}
+              isSettingsActive={view === 'settings'}
+              onSettingsClick={() => setView(v => v === 'settings' ? 'editor' : 'settings')}
+            />
           )}
         </div>
       </div>

@@ -1,3 +1,11 @@
+MAY 21, 2026
+------------
+
+Aesthetics:
+- User email, settings, and sign-out consolidated into an avatar dropdown
+  in the title bar; clicking the initials avatar opens a menu with Settings
+  and Sign out options
+
 MAY 20, 2026
 ------------
 
