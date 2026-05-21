@@ -6,6 +6,7 @@ import ChatPanel from './ChatPanel'
 import ConjugatePanel from './ConjugatePanel'
 import DictionaryPanel from './DictionaryPanel'
 import SettingsPage from './SettingsPage'
+import defaultAvatar from './assets/user.png'
 
 const LANGUAGES = [
   { code: 'pt-PT', label: 'Portuguese (Portugal)' },
@@ -52,14 +53,14 @@ const UserMenu = ({ user, isSettingsActive, onSettingsClick }) => {
         aria-haspopup="true"
         aria-expanded={open}
       >
-        <span className="user-avatar">{initials}</span>
+        <span className="user-avatar"><img src={defaultAvatar} alt={initials} /></span>
         <span className="user-menu-email">{user.email}</span>
         <span className="user-menu-chevron">{open ? '▲' : '▼'}</span>
       </button>
       {open && (
         <div className="user-menu-dropdown">
           <div className="user-menu-header">
-            <span className="user-menu-header-avatar">{initials}</span>
+            <span className="user-menu-header-avatar"><img src={defaultAvatar} alt={initials} /></span>
             <span className="user-menu-header-email">{user.email}</span>
           </div>
           <div className="user-menu-divider" />
