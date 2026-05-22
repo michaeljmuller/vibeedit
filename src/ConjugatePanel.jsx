@@ -1,9 +1,15 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Results } from './ConjugateResults'
 
-export default function ConjugatePanel({ state, setState, lang }) {
+export default function ConjugatePanel({ state, setState, lang, activationKey }) {
   const [loading, setLoading] = useState(false)
   const { verb, sections, error } = state
+  const inputRef = useRef(null)
+
+  useEffect(() => {
+    inputRef.current?.focus()
+    inputRef.current?.select()
+  }, [activationKey])
 
   const setVerb = (verb) => setState(s => ({ ...s, verb }))
   const setError = (error) => setState(s => ({ ...s, error }))
@@ -42,11 +48,11 @@ export default function ConjugatePanel({ state, setState, lang }) {
     <div className="panel-bar conjugate-panel">
       <form className="conjugate-input-row" onSubmit={handleSubmit}>
         <input
+          ref={inputRef}
           type="text"
           value={verb}
           onChange={e => setVerb(e.target.value)}
           placeholder="Enter a verb…"
-          autoFocus
           autoComplete="off"
           spellCheck={false}
           disabled={loading}

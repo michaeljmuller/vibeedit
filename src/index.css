@@ -327,7 +327,8 @@ h1 {
   align-items: center;
   justify-content: space-between;
   padding: 6px 14px 6px 16px;
-  border-bottom: 1px solid #dde2ea;
+  background: #d8dde8;
+  border-bottom: 1px solid #c8cdd8;
   flex-shrink: 0;
   animation: panel-fade-in 0.12s ease-out;
 }
@@ -572,29 +573,6 @@ h1 {
   gap: 8px;
 }
 
-.translate-controls {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.retranslate-btn {
-  font-size: 12px;
-  padding: 3px 9px;
-  border: none;
-  border-radius: 5px;
-  background: #1a73e8;
-  cursor: pointer;
-  color: #fff;
-}
-
-.retranslate-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.retranslate-btn:hover:not(:disabled) {
-  background: #1557b0;
-}
 
 .translate-status {
   font-size: 13px;
@@ -714,6 +692,12 @@ h1 {
 .conjugate-input-row {
   display: flex;
   gap: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #edf0f8;
+  margin: -12px -16px 0;
+  padding: 12px 16px 4px;
 }
 
 .conjugate-input-row input {
@@ -859,6 +843,13 @@ h1 {
 
 /* ── Chat panel ───────────────────────────────────────────────────────────── */
 
+.chat-panel-wrapper {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+}
+
 .chat-panel {
   flex: 1;
   min-height: 0;
@@ -900,13 +891,6 @@ h1 {
   align-self: flex-start;
 }
 
-.chat-role {
-  font-size: 10px;
-  font-weight: 700;
-  color: #bbb;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
 
 .chat-message--user p {
   background: #1a73e8;
@@ -1072,6 +1056,12 @@ h1 {
 .dict-input-row {
   display: flex;
   gap: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #edf0f8;
+  margin: -12px -16px 0;
+  padding: 12px 16px 4px;
 }
 
 .dict-input-row input {
@@ -1206,76 +1196,125 @@ h1 {
   color: #1a73e8;
 }
 
-/* ── Settings page ─────────────────────────────────────────────────────────── */
+/* ── Modals ─────────────────────────────────────────────────────────────────── */
 
-.settings-page {
-  flex: 1;
-  min-height: 0;
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
   background: #fff;
   border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  display: flex;
+  flex-direction: column;
+  width: 90vw;
+  max-width: 640px;
+  max-height: 80vh;
   overflow: hidden;
 }
 
-.settings-nav {
+.modal-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 10px 16px;
+  justify-content: space-between;
+  padding: 13px 16px;
   border-bottom: 1px solid #e8e8e8;
   background: #fafafa;
   flex-shrink: 0;
 }
 
-.settings-back-btn {
-  font-size: 13px;
-  padding: 4px 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  background: #fff;
+.modal-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.modal-x-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  color: #aaa;
   cursor: pointer;
-  color: #444;
-  transition: background 0.12s;
+  padding: 0 4px;
+  border-radius: 4px;
 }
 
-.settings-back-btn:hover {
-  background: #f0f0f0;
+.modal-x-btn:hover {
+  color: #333;
+  background: #eee;
 }
 
-.settings-page-heading {
-  font-size: 11px;
-  font-weight: 700;
-  color: #555;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-}
-
-.settings-body {
+.modal-body {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
-  padding: 24px;
+  padding: 20px;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
 }
 
-.settings-field {
+.modal-footer {
   display: flex;
-  flex-direction: column;
+  justify-content: flex-end;
   gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid #e8e8e8;
+  background: #fafafa;
   flex-shrink: 0;
 }
 
-.settings-field--grow {
-  flex: 1;
-  min-height: 0;
-  flex-shrink: 1;
+.modal-btn {
+  padding: 7px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  border: 1px solid #ddd;
+  font-family: inherit;
 }
 
-.settings-lang-select {
+.modal-btn--primary {
+  background: #1a73e8;
+  color: #fff;
+  border-color: #1a73e8;
+}
+
+.modal-btn--primary:hover {
+  background: #1557b0;
+}
+
+.modal-btn--secondary {
+  background: #fff;
+  color: #444;
+}
+
+.modal-btn--secondary:hover {
+  background: #f0f0f0;
+}
+
+.modal-hint {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.modal-hint code {
+  font-family: monospace;
+  background: #eee;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.modal-lang-select {
   font-size: 14px;
   padding: 6px 10px;
   border: 1px solid #ddd;
@@ -1286,95 +1325,37 @@ h1 {
   align-self: flex-start;
 }
 
-.settings-label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #222;
-}
-
-.settings-hint {
-  font-size: 13px;
-  color: #777;
-  line-height: 1.5;
-}
-
-.settings-hint code {
-  font-family: monospace;
-  color: #555;
-  background: #eee;
-  padding: 1px 4px;
-  border-radius: 3px;
-}
-
-.settings-textarea {
-  height: 130px;
-  min-height: 80px;
-  font-size: 13px;
-  font-family: inherit;
-  color: #333;
+.modal-textarea {
+  flex: 1;
+  min-height: 180px;
+  padding: 10px 12px;
   border: 1px solid #e0e0e0;
   border-radius: 6px;
-  padding: 10px 12px;
-  resize: vertical;
+  font-family: inherit;
+  font-size: 13px;
   line-height: 1.6;
-  background: #fff;
+  color: #333;
+  resize: none;
+  outline: none;
 }
 
-.settings-textarea:focus {
-  outline: none;
+.modal-textarea:focus {
   border-color: #1a73e8;
   box-shadow: 0 0 0 2px rgba(26,115,232,0.12);
 }
 
-.settings-release-textarea {
-  height: 160px;
-  font-family: inherit;
-  font-size: 12px;
-  line-height: 1.6;
-  color: #444;
+.modal-textarea--readonly {
   background: #f8f9fa;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  padding: 10px 12px;
-  resize: none;
+  color: #444;
   white-space: pre;
   overflow-wrap: normal;
+  font-family: inherit;
 }
 
-.settings-log-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.settings-log-btn {
-  font-size: 12px;
-  padding: 2px 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: #fff;
-  cursor: pointer;
-  color: #555;
-}
-
-.settings-log-btn:hover {
-  background: #f0f0f0;
-}
-
-.settings-log-textarea {
-  flex: 1;
-  min-height: 0;
+.modal-textarea--log {
+  min-height: 320px;
   font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
   font-size: 11px;
-  line-height: 1.5;
-  color: #333;
-  background: #f8f9fa;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  padding: 10px 12px;
-  resize: none;
-  white-space: pre;
-  overflow-wrap: normal;
 }
 
 @media (max-width: 800px) {

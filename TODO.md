@@ -6,7 +6,6 @@
  - bug: why isn't ecrã found?  in the mac Dictionary app, it's "écran, ecrã" so maybe something about being the second definition?
  - copy to clipboard feature!
  - admin area with user config (to grant others access)
- - change the "prompt" button into a settings page.  add the ability to customize the instructions given to the "chat" feature.
  - dictionary lookup seems to be case sensitive: "latin" not found but "Latin" is
  - no need to log error when dictionary lookup fails
  - try other TTS options.  1) fuck openai 2) sounds pt-br to me (t is ch/dj)
@@ -15,17 +14,9 @@
  - feature: token usage indicator / cost estimator
  - better error message when word isn't found in conjugation tool
  - make it so you can add users without having to re-start
- - pt conjugation tool is missing conditional!
  - save / backup?
- - dictionary: don't link the word back to itself
- - turn the username/settings/logout into a drop menu with settings and logout as options
- - move the re-translate button up by the "close" box to save vertical space
  - a little animation in the "check" button when it's working?  maybe another animation for when it's done?
- - change column header from "score" to "status"
- - it's visually incongruous to have the dimension of the tags not match the status/score.
- - does the baseline of the "edit" button align with the text of source/target/etc?
- - can we tighten up the list a little, place the rows closer together?
  - idea: have "escape" in the editor window close the panel
  - handle bad JSON from "check" function.  retry?  (Unexpected token 'I', "I'll analy"... is not valid JSON)  not using output_config?
  - when there's an error (like 529) from chat, put the submitted text back in the chat input text.  OR display it as sent and show the error in the chat window.
- - try a side-by-side mode
+ - be able to choose different font sizes for the editor window

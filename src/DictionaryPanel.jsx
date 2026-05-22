@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 const WORD_RE = /([A-Za-zÀ-ɏ]+(?:['’-][A-Za-zÀ-ɏ]+)*)/
 
@@ -44,9 +44,15 @@ function DictResult({ result, onWordClick }) {
   )
 }
 
-export default function DictionaryPanel({ state, setState, lang }) {
+export default function DictionaryPanel({ state, setState, lang, activationKey }) {
   const { word, results, error, loading } = state
   const [input, setInput] = useState(word || '')
+  const inputRef = useRef(null)
+
+  useEffect(() => {
+    inputRef.current?.focus()
+    inputRef.current?.select()
+  }, [activationKey])
 
   const lookup = async (w) => {
     setState(s => ({ ...s, loading: true, error: null, results: null, word: w }))
@@ -78,11 +84,10 @@ export default function DictionaryPanel({ state, setState, lang }) {
     <div className="panel-bar dict-panel">
       <form className="dict-input-row" onSubmit={handleSubmit}>
         <input
+          ref={inputRef}
           value={input}
           onChange={e => setInput(e.target.value)}
           placeholder="Word…"
-          autoFocus
-          onFocus={e => e.target.select()}
         />
         <button type="submit" disabled={loading}>Look up</button>
       </form>

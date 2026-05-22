@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Markdown from 'react-markdown'
 
-export default function ChatPanel({ getEditorText, history, setHistory, active, prompt }) {
+export default function ChatPanel({ getEditorText, history, setHistory, activationKey, prompt }) {
   const [question, setQuestion] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -13,8 +13,8 @@ export default function ChatPanel({ getEditorText, history, setHistory, active, 
   }, [history, loading])
 
   useEffect(() => {
-    if (active) textareaRef.current?.focus()
-  }, [active])
+    textareaRef.current?.focus()
+  }, [activationKey])
 
   const adjustHeight = () => {
     const ta = textareaRef.current
@@ -86,7 +86,6 @@ export default function ChatPanel({ getEditorText, history, setHistory, active, 
         )}
         {history.map((msg, i) => (
           <div key={i} className={`chat-message chat-message--${msg.role}`}>
-            <span className="chat-role">{msg.role === 'user' ? 'You' : 'Claude'}</span>
             {msg.role === 'assistant'
               ? <div className="chat-bubble"><Markdown>{msg.content}</Markdown></div>
               : <p>{msg.content}</p>
@@ -95,7 +94,6 @@ export default function ChatPanel({ getEditorText, history, setHistory, active, 
         ))}
         {loading && (
           <div className="chat-message chat-message--assistant">
-            <span className="chat-role">Claude</span>
             <p className="chat-thinking">Thinking…</p>
           </div>
         )}

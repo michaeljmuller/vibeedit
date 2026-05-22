@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { FooHighlight } from './FooHighlight'
 import ChatPanel from './ChatPanel'
 import ConjugatePanel from './ConjugatePanel'
 import DictionaryPanel from './DictionaryPanel'
-import SettingsPage from './SettingsPage'
+import { LanguageModal, PromptModal, ReleaseNotesModal, LogsModal } from './SettingsModals'
 import defaultAvatar from './assets/user.png'
 
 const LANGUAGES = [
@@ -33,7 +33,7 @@ const PANEL_TITLES = {
   speak:      'Text to Speech',
 }
 
-const UserMenu = ({ user, isSettingsActive, onSettingsClick }) => {
+const UserMenu = ({ user, onOpenModal }) => {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -43,6 +43,7 @@ const UserMenu = ({ user, isSettingsActive, onSettingsClick }) => {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  const open_modal = (name) => { onOpenModal(name); setOpen(false) }
   const initials = (user.email || '?').slice(0, 2).toUpperCase()
 
   return (
@@ -64,12 +65,11 @@ const UserMenu = ({ user, isSettingsActive, onSettingsClick }) => {
             <span className="user-menu-header-email">{user.email}</span>
           </div>
           <div className="user-menu-divider" />
-          <button
-            className={`user-menu-item${isSettingsActive ? ' user-menu-item--active' : ''}`}
-            onClick={() => { onSettingsClick(); setOpen(false) }}
-          >
-            <span className="user-menu-item-icon user-menu-item-icon--gear">⚙</span> Settings
-          </button>
+          <button className="user-menu-item" onClick={() => open_modal('language')}>Language</button>
+          <button className="user-menu-item" onClick={() => open_modal('prompt')}>Prompt</button>
+          <button className="user-menu-item" onClick={() => open_modal('release-notes')}>Release Notes</button>
+          <button className="user-menu-item" onClick={() => open_modal('logs')}>Logs</button>
+          <div className="user-menu-divider" />
           <a href="/auth/logout" className="user-menu-item user-menu-item--logout">
             <span className="user-menu-item-icon">→</span> Sign out
           </a>
@@ -213,7 +213,7 @@ function SpeakPanel({ getEditorText, active }) {
   )
 }
 
-function TranslatePanel({ getEditorHtml, active }) {
+const TranslatePanel = forwardRef(function TranslatePanel({ getEditorHtml, active }, ref) {
   const [translation, setTranslation] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -242,21 +242,20 @@ function TranslatePanel({ getEditorHtml, active }) {
     }
   }
 
+  useImperativeHandle(ref, () => ({ retranslate: () => run(true), loading }), [loading])
+
   useEffect(() => {
     if (active) run()
   }, [active])
 
   return (
     <div className="panel-bar translate-panel">
-      <div className="translate-controls">
-        <button className="retranslate-btn" onClick={() => run(true)} disabled={loading}>↺ Re-translate</button>
-      </div>
       {loading && <p className="translate-status">Translating…</p>}
       {error && <p className="translate-status error">{error}</p>}
       {translation && <div className="translate-output tiptap" dangerouslySetInnerHTML={{ __html: translation }} />}
     </div>
   )
-}
+})
 
 // Migrate old bare 'pt' localStorage keys to 'pt-PT'
 ;(() => {
@@ -279,6 +278,7 @@ export default function App() {
   const [error, setError] = useState(null)
   const [tooltip, setTooltip] = useState(null)
   const [activePanel, setActivePanel] = useState(null)
+  const [panelActivationKey, setPanelActivationKey] = useState(0)
   const [chatHistory, setChatHistory] = useState([])
   const [conjugateState, setConjugateState] = useState({ verb: '', sections: null, error: null })
   const [dictState, setDictState] = useState({ word: '', results: null, error: null, loading: false })
@@ -287,10 +287,11 @@ export default function App() {
   const panelWidth = Math.floor(panelWidthRatio * window.innerWidth)
   const [annotations, setAnnotations] = useState([])
   const [user, setUser] = useState(null)
-  const [view, setView] = useState('editor')
+  const [modal, setModal] = useState(null)
   const hideTimer = useRef(null)
   const saveTimer = useRef(null)
   const dragState = useRef(null)
+  const translatePanelRef = useRef(null)
 
   useEffect(() => {
     fetch('/api/me').then(r => r.json()).then(d => setUser(d)).catch(() => {})
@@ -351,23 +352,24 @@ export default function App() {
   }, [editor])
 
   const handlePanelToggle = (panel) => {
-    setActivePanel(prev => {
-      const next = prev === panel ? null : panel
-      if (next === null) editor?.commands.focus()
-      return next
-    })
+    setActivePanel(panel)
+    setPanelActivationKey(k => k + 1)
   }
+
+  const handlePanelClose = useCallback(() => {
+    setActivePanel(null)
+    editor?.commands.focus()
+  }, [editor])
 
   useEffect(() => {
     const onKeyDown = (e) => {
       if (e.key === 'Escape' && activePanel && activePanel !== 'check') {
-        setActivePanel(null)
-        editor?.commands.focus()
+        handlePanelClose()
       }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [activePanel, editor])
+  }, [activePanel, editor, handlePanelClose])
 
   useEffect(() => {
     const saved = localStorage.getItem(`vibeedit-prompt-${lang}`)
@@ -394,6 +396,11 @@ export default function App() {
   const handlePromptChange = (e) => {
     setPrompt(e.target.value)
     localStorage.setItem(`vibeedit-prompt-${lang}`, e.target.value)
+  }
+
+  const handlePromptSave = (value) => {
+    setPrompt(value)
+    localStorage.setItem(`vibeedit-prompt-${lang}`, value)
   }
 
   const handleCheck = useCallback(async () => {
@@ -488,29 +495,16 @@ export default function App() {
     <div className="container">
       <div className="title-bar">
         <h1>VibeEdit</h1>
-        {view === 'editor' && (
-          <span className="lang-display">{LANGUAGES.find(l => l.code === lang)?.label}</span>
-        )}
+        <span className="lang-display">{LANGUAGES.find(l => l.code === lang)?.label}</span>
         <div className="title-bar-right">
-          {user && (
-            <UserMenu
-              user={user}
-              isSettingsActive={view === 'settings'}
-              onSettingsClick={() => setView(v => v === 'settings' ? 'editor' : 'settings')}
-            />
-          )}
+          {user && <UserMenu user={user} onOpenModal={setModal} />}
         </div>
       </div>
-      {view === 'settings' ? (
-        <SettingsPage
-          lang={lang}
-          languages={LANGUAGES}
-          onLangChange={handleLangChange}
-          prompt={prompt}
-          onPromptChange={handlePromptChange}
-          onBack={() => setView('editor')}
-        />
-      ) : (
+      {modal === 'language' && <LanguageModal lang={lang} languages={LANGUAGES} onSave={handleLangChange} onClose={() => setModal(null)} />}
+      {modal === 'prompt' && <PromptModal prompt={prompt} onSave={handlePromptSave} onClose={() => setModal(null)} />}
+      {modal === 'release-notes' && <ReleaseNotesModal onClose={() => setModal(null)} />}
+      {modal === 'logs' && <LogsModal onClose={() => setModal(null)} />}
+      {(
         <div className="editor-wrapper">
           <MenuBar
             editor={editor}
@@ -541,27 +535,30 @@ export default function App() {
                   <span className="panel-title">{PANEL_TITLES[activePanel]}</span>
                 </div>
                 <div className="panel-header-right">
+                  {activePanel === 'translate' && (
+                    <button className="panel-secondary-btn" onClick={() => translatePanelRef.current?.retranslate()} disabled={translatePanelRef.current?.loading}>↺ Re-translate</button>
+                  )}
                   {activePanel === 'chat' && chatHistory.length > 0 && (
                     <button className="panel-secondary-btn" onClick={() => setChatHistory([])}>Clear chat</button>
                   )}
                   <button
                     className="panel-close-btn"
-                    onClick={() => handlePanelToggle(activePanel)}
+                    onClick={handlePanelClose}
                     title="Close panel"
                   >×</button>
                 </div>
               </div>
               <div className="panel-container">
                 <div style={{ display: activePanel === 'translate' ? undefined : 'none' }}>
-                  <TranslatePanel getEditorHtml={() => editor?.getHTML()} active={activePanel === 'translate'} />
+                  <TranslatePanel ref={translatePanelRef} getEditorHtml={() => editor?.getHTML()} active={activePanel === 'translate'} />
                 </div>
-                {activePanel === 'conjugate' && <ConjugatePanel state={conjugateState} setState={setConjugateState} lang={lang} />}
-                {activePanel === 'dictionary' && <DictionaryPanel state={dictState} setState={setDictState} lang={lang} />}
+                {activePanel === 'conjugate' && <ConjugatePanel state={conjugateState} setState={setConjugateState} lang={lang} activationKey={panelActivationKey} />}
+                {activePanel === 'dictionary' && <DictionaryPanel state={dictState} setState={setDictState} lang={lang} activationKey={panelActivationKey} />}
                 <div style={{ display: activePanel === 'speak' ? undefined : 'none' }}>
                   <SpeakPanel getEditorText={() => editor?.getText()} active={activePanel === 'speak'} />
                 </div>
-                <div style={{ display: activePanel === 'chat' ? undefined : 'none' }}>
-                  <ChatPanel getEditorText={() => editor?.getText()} history={chatHistory} setHistory={setChatHistory} active={activePanel === 'chat'} prompt={expandedPrompt} />
+                <div className="chat-panel-wrapper" style={{ display: activePanel === 'chat' ? undefined : 'none' }}>
+                  <ChatPanel getEditorText={() => editor?.getText()} history={chatHistory} setHistory={setChatHistory} activationKey={panelActivationKey} prompt={expandedPrompt} />
                 </div>
               </div>
             </div>
