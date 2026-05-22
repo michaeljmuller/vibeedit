@@ -2,6 +2,17 @@ MAY 21, 2026
 ------------
 
 Aesthetics:
+- Settings replaced with four separate modal pop-ups (Language, Prompt,
+  Release Notes, Logs) accessible from the avatar dropdown
+- Panel tabs no longer close on re-click; clicking a tab selects any
+  existing text in the input field
+- Re-translate button moved to the panel header bar alongside the close button
+- Chat input pinned to the bottom of the panel; messages scroll independently
+- You/Claude role labels removed from chat bubbles
+- Dictionary and conjugate search inputs stay fixed when scrolling results
+- Panel header bar is now darker to distinguish it from the panel body
+
+Aesthetics (previous):
 - User email, settings, and sign-out consolidated into an avatar dropdown
   in the title bar; clicking the initials avatar opens a menu with Settings
   and Sign out options
