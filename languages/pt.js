@@ -5,11 +5,22 @@ import { fileURLToPath } from 'url'
 import { inflateSync } from 'zlib'
 
 function parseCell($, td) {
-  const pronoun = $(td).find('i').text().trim()
   const dataT = $(td).attr('data-t')
-  const clone = $(td).clone()
-  clone.find('i').remove()
-  const form = clone.text().trim()
+  // The verb form is the plain text; pronouns/particles are wrapped in <i>.
+  // Their position matters: pronouns precede the verb in most tenses but follow
+  // it in the imperative (e.g. "fala tu", "não fales tu"), so track each side.
+  let pronoun = '', pronounAfter = '', form = ''
+  $(td).contents().each(function () {
+    if (this.type === 'tag' && this.name === 'i') {
+      const t = $(this).text().trim()
+      if (!t) return
+      if (form) pronounAfter += (pronounAfter ? ' ' : '') + t
+      else pronoun += (pronoun ? ' ' : '') + t
+    } else {
+      form += $(this).text()
+    }
+  })
+  form = form.trim()
   if (!form) return null
   let stem = form, suffix = '', className = ''
   if (dataT) {
@@ -24,7 +35,7 @@ function parseCell($, td) {
       suffix = form.substring(stemLen)
     }
   }
-  return { pronoun, stem, suffix, className }
+  return { pronoun, stem, suffix, className, pronounAfter }
 }
 
 function parseTenses($, tableSelector) {
@@ -45,6 +56,25 @@ function parseTenses($, tableSelector) {
   return tenses
 }
 
+const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1)
+
+// The site splits the indicativo across two h2 blocks and lists the present
+// tense in the second one. Merge them into a single section and surface the
+// present tense first.
+function mergeIndicativo(sections) {
+  const idx = sections.findIndex(s => s.heading.toLowerCase() === 'indicativo')
+  if (idx < 0) return
+  const merged = []
+  for (let i = sections.length - 1; i > idx; i--) {
+    if (sections[i].heading.toLowerCase() === 'indicativo') {
+      merged.unshift(...sections.splice(i, 1)[0].tenses)
+    }
+  }
+  merged.unshift(...sections[idx].tenses)
+  merged.sort((a, b) => (b.name.toLowerCase() === 'presente') - (a.name.toLowerCase() === 'presente'))
+  sections[idx].tenses = merged
+}
+
 function scrapeConjugations($) {
   const capturedEls = new Set()
   const sections = []
@@ -57,16 +87,19 @@ function scrapeConjugations($) {
     if (tenses.length) sections.push({ heading, tenses })
   })
 
+  mergeIndicativo(sections)
+
   // Collect tables not reached by any h2 (e.g. condicional, infinitivo pessoal)
+  // and give each its own section so unrelated tenses aren't grouped together.
   const orphanTables = $('main table').filter(function () { return !capturedEls.has(this) })
-  const orphanTenses = parseTenses($, orphanTables)
-  if (orphanTenses.length) {
+  const orphanSections = parseTenses($, orphanTables)
+    .map(t => ({ heading: capitalize(t.name), tenses: [t] }))
+  if (orphanSections.length) {
     const imperativoIdx = sections.findIndex(s => s.heading.toLowerCase() === 'imperativo')
-    const orphanSection = { heading: 'Condicional', tenses: orphanTenses }
     if (imperativoIdx >= 0) {
-      sections.splice(imperativoIdx + 1, 0, orphanSection)
+      sections.splice(imperativoIdx + 1, 0, ...orphanSections)
     } else {
-      sections.push(orphanSection)
+      sections.push(...orphanSections)
     }
   }
 

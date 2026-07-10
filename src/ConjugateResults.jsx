@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 function ConjugateCell({ cell }) {
-  const { pronoun, stem, suffix, className } = cell
+  const { pronoun, stem, suffix, className, pronounAfter } = cell
   const formEl = suffix
     ? <span>{stem}<span className={`conj-${className}`}>{suffix}</span></span>
     : <span>{stem}</span>
@@ -9,6 +9,7 @@ function ConjugateCell({ cell }) {
     <td className="conj-cell">
       {pronoun && <span className="conj-pronoun">{pronoun} </span>}
       {formEl}
+      {pronounAfter && <span className="conj-pronoun"> {pronounAfter}</span>}
     </td>
   )
 }
