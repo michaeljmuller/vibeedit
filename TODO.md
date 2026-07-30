@@ -20,3 +20,7 @@
  - handle bad JSON from "check" function.  retry?  (Unexpected token 'I', "I'll analy"... is not valid JSON)  not using output_config?
  - when there's an error (like 529) from chat, put the submitted text back in the chat input text.  OR display it as sent and show the error in the chat window.
  - be able to choose different font sizes for the editor window
+ - the personal ininitive is in the "conditional" section
+ - give it a proper favico
+ - why isn't ecrã found in the dictionary?  i see it when i look up "screen".
+ - dictionary seems to have regressed; can't find aregar either. but i CAN find arejar.

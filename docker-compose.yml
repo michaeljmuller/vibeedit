@@ -1,3 +1,5 @@
+name: vibeedit
+
 services:
   app:
     build:
@@ -7,7 +9,7 @@ services:
         OPENAI_API_KEY: ${OPENAI_API_KEY}
     ports:
       - "3000:3000"
-    restart: unless-stopped
+    restart: ${RESTART_POLICY:-unless-stopped}
     environment:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
