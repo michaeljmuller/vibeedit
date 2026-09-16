@@ -45,6 +45,11 @@ const UserMenu = ({ user, onOpenModal }) => {
 
   const open_modal = (name) => { onOpenModal(name); setOpen(false) }
   const initials = (user.email || '?').slice(0, 2).toUpperCase()
+  const [version, setVersion] = useState(null)
+
+  useEffect(() => {
+    fetch('/api/version').then(r => r.json()).then(setVersion).catch(() => {})
+  }, [])
 
   return (
     <div className="user-menu" ref={ref}>
@@ -73,6 +78,7 @@ const UserMenu = ({ user, onOpenModal }) => {
           <a href="/auth/logout" className="user-menu-item user-menu-item--logout">
             <span className="user-menu-item-icon">→</span> Sign out
           </a>
+          {version && <div className="user-menu-version">{version.commit}{version.date ? ` · ${version.date.slice(0, 10)}` : ''}</div>}
         </div>
       )}
     </div>

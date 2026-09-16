@@ -1372,3 +1372,9 @@ h1 {
     display: none;
   }
 }
+
+.user-menu-version {
+  padding: 0 16px 8px;
+  font-size: 0.7rem;
+  color: #aaa;
+}

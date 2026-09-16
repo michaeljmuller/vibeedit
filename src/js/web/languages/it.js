@@ -7,8 +7,8 @@ import { inflateSync } from 'zlib'
 // ── Apple Dictionary ──────────────────────────────────────────────────────────
 
 function findAppleDictPath() {
-  // Check project-local copy first
-  const local = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'italian-english-dictionary.data')
+  // Check the data dir first (DICT_DIR, set to the /data mount in the container)
+  const local = join(process.env.DICT_DIR || join(dirname(fileURLToPath(import.meta.url)), '..', 'data'), 'italian-english-dictionary.data')
   if (existsSync(local)) return local
 
   // Fall back to macOS system location

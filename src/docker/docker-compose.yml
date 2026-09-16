@@ -1,21 +1,38 @@
 name: vibeedit
 
+# VibeEdit: Express server + React client in one container.
+# Built on the server via `git pull` (no registry); runs identically under
+# docker/arm64 (dev) and podman/amd64 (prod). Caddy fronts the app on the host.
 services:
   app:
     build:
-      context: ../js/web
-      dockerfile: ../../docker/web/Dockerfile
-      args:
-        ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-        OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # Context is the repository root, not the component dir: the image stamps
+      # the running commit into /app/VERSION, so .git has to be reachable.
+      context: ../..
+      dockerfile: src/docker/web/Dockerfile
     ports:
+      # Host port 3000 -> edit.themullers.org (see ports registry).
       - "3000:3000"
     restart: ${RESTART_POLICY:-unless-stopped}
     environment:
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL:-http://localhost:3000/auth/google/callback}
-      - SESSION_SECRET=${SESSION_SECRET}
-      - _SINGLE_USER_EMAIL=${_SINGLE_USER_EMAIL:-}
+      # Runtime rather than build args, so the keys never land in image layers.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?set ANTHROPIC_API_KEY in .env}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?set OPENAI_API_KEY in .env}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-http://localhost:3000/auth/google/callback}
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in .env}
+      # Bypasses Google and signs everyone in as this address. Never set in prod.
+      _SINGLE_USER_EMAIL: ${_SINGLE_USER_EMAIL:-}
+      DICT_DIR: /data
     volumes:
+      # Both read-only: the app never writes to them. The dictionaries are
+      # copied from a Mac (util/setup-dictionaries.sh) and are not redistributable,
+      # so they are mounted rather than built into the image.
       - ../../config/allowed-emails.txt:/config/allowed-emails.txt:ro
+      - ../../data:/data:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

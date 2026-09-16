@@ -1,28 +1,31 @@
-FROM node:20-alpine AS builder
+# Build context = the repository root, so that .git is reachable (see below).
 
+# Stage one only reads git. Nothing but the two lines it writes reaches the final
+# image, so the app carries neither a git binary nor the object database.
+FROM alpine/git AS version
+COPY .git /src/.git
+RUN git -C /src rev-parse --short HEAD > /version.txt \
+ && git -C /src log -1 --format=%cI >> /version.txt
+
+FROM node:20-alpine AS builder
 WORKDIR /app
-COPY package.json .
+# Manifest first so the npm layer is reused when only source changes.
+COPY src/js/web/package.json ./
 RUN npm install
-RUN mkdir -p /app/data
-COPY . .
+COPY src/js/web/ ./
 RUN npm run build
 
 FROM node:20-alpine
 WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json .
-COPY --from=builder /app/server.js .
+COPY --from=builder /app/package.json /app/server.js /app/RELEASE-NOTES.txt ./
 COPY --from=builder /app/languages ./languages
 COPY --from=builder /app/prompts ./prompts
-COPY --from=builder /app/data ./data
-COPY --from=builder /app/RELEASE-NOTES.txt .
+# Last, so that a new commit does not invalidate the layers above it.
+COPY --from=version /version.txt ./VERSION
 
-ARG ANTHROPIC_API_KEY
-ARG OPENAI_API_KEY
-RUN test -n "$ANTHROPIC_API_KEY" || (echo "ERROR: ANTHROPIC_API_KEY build arg is required" && exit 1) && \
-    test -n "$OPENAI_API_KEY"    || (echo "ERROR: OPENAI_API_KEY build arg is required"    && exit 1) && \
-    printf "ANTHROPIC_API_KEY=%s\nOPENAI_API_KEY=%s\n" "$ANTHROPIC_API_KEY" "$OPENAI_API_KEY" > .apikey
-
+# Plain HTTP; Caddy terminates TLS in front of this on the host.
+# API keys and dictionaries are supplied at runtime by compose, not baked in.
 EXPOSE 3000
 CMD ["node", "server.js"]

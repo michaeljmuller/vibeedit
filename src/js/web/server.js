@@ -12,26 +12,14 @@ import { scrape as scrapeIt, lookup as lookupIt } from './languages/it.js'
 const languageScrapers = { 'pt-PT': scrapePt, 'pt-BR': scrapePt, it: scrapeIt }
 const languageLookup = { 'pt-PT': lookupPt, 'pt-BR': lookupPt, it: lookupIt }
 
-// Load API keys from .apikey file if not in environment
-if (!process.env.ANTHROPIC_API_KEY || !process.env.OPENAI_API_KEY) {
-  try {
-    const content = readFileSync('.apikey', 'utf8')
-    if (!process.env.ANTHROPIC_API_KEY) {
-      const match = content.match(/ANTHROPIC_API_KEY=(.+)/)
-      if (match) process.env.ANTHROPIC_API_KEY = match[1].trim()
-    }
-    if (!process.env.OPENAI_API_KEY) {
-      const match = content.match(/OPENAI_API_KEY=(.+)/)
-      if (match) process.env.OPENAI_API_KEY = match[1].trim()
-    }
-  } catch {}
-}
-
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const SINGLE_USER_EMAIL = process.env._SINGLE_USER_EMAIL?.trim().toLowerCase() || null
 
 const app = express()
 app.use(express.json())
+
+// Container healthcheck; registered before session/auth so it needs no login.
+app.get('/healthz', (req, res) => res.send('ok'))
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -168,6 +156,16 @@ app.use(express.static(join(__dirname, 'dist')))
 
 app.get('/api/me', (req, res) => {
   res.json({ email: req.user.email })
+})
+
+// VERSION is written at image build time (commit hash, then commit date).
+app.get('/api/version', (req, res) => {
+  try {
+    const [commit, date] = readFileSync(join(__dirname, 'VERSION'), 'utf8').trim().split('\n')
+    res.json({ commit, date })
+  } catch {
+    res.json({ commit: 'dev', date: null })
+  }
 })
 
 app.get('/api/release-notes', (req, res) => {
