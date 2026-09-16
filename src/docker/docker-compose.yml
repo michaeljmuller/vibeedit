@@ -3,7 +3,8 @@ name: vibeedit
 services:
   app:
     build:
-      context: .
+      context: ../js/web
+      dockerfile: ../../docker/web/Dockerfile
       args:
         ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
         OPENAI_API_KEY: ${OPENAI_API_KEY}
@@ -17,4 +18,4 @@ services:
       - SESSION_SECRET=${SESSION_SECRET}
       - _SINGLE_USER_EMAIL=${_SINGLE_USER_EMAIL:-}
     volumes:
-      - ./config/allowed-emails.txt:/config/allowed-emails.txt:ro
+      - ../../config/allowed-emails.txt:/config/allowed-emails.txt:ro
