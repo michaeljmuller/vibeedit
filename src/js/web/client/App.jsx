@@ -115,8 +115,6 @@ const MenuBar = ({ editor, onCheck, checking, activePanel, onPanelToggle, ctrlHe
   )
 }
 
-const VOICES = ['alloy', 'ash', 'ballad', 'cedar', 'echo', 'fable', 'onyx', 'nova', 'sage', 'shimmer', 'verse']
-
 function SpeakPanel({ getEditorText, active }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -124,13 +122,7 @@ function SpeakPanel({ getEditorText, active }) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
-  const [voice, setVoice] = useState(() => localStorage.getItem('vibeedit-voice') ?? 'cedar')
   const audioRef = useRef(null)
-
-  const handleVoiceChange = (e) => {
-    setVoice(e.target.value)
-    localStorage.setItem('vibeedit-voice', e.target.value)
-  }
 
   const generate = async () => {
     setLoading(true)
@@ -142,7 +134,7 @@ function SpeakPanel({ getEditorText, active }) {
       const res = await fetch('/api/speak', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: getEditorText(), voice }),
+        body: JSON.stringify({ text: getEditorText() }),
       })
       if (!res.ok) {
         const data = await res.json()
@@ -183,9 +175,6 @@ function SpeakPanel({ getEditorText, active }) {
   return (
     <div className="panel-bar speak-panel">
       <div className="speak-controls-row">
-        <select className="voice-picker" value={voice} onChange={handleVoiceChange} disabled={loading}>
-          {VOICES.map(v => <option key={v} value={v}>{v}</option>)}
-        </select>
         <button className="regen-btn" onClick={generate} disabled={loading}>↺ Re-generate</button>
       </div>
       {loading && <p className="speak-status">Generating audio…</p>}

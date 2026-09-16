@@ -17,7 +17,11 @@ services:
     environment:
       # Runtime rather than build args, so the keys never land in image layers.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?set ANTHROPIC_API_KEY in .env}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:?set OPENAI_API_KEY in .env}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:?set ELEVENLABS_API_KEY in .env}
+      # Text to speech. The default voice is "Lourenço" (European Portuguese); any
+      # voice ID from the ElevenLabs library works.
+      TTS_VOICE_ID: ${TTS_VOICE_ID:-Fij0Q07RV232HQv4oaiV}
+      TTS_MODEL: ${TTS_MODEL:-eleven_multilingual_v2}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-http://localhost:3000/auth/google/callback}

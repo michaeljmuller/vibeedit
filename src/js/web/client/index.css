@@ -605,16 +605,6 @@ h1 {
   gap: 8px;
 }
 
-.voice-picker {
-  font-size: 12px;
-  padding: 3px 6px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  background: #fff;
-  color: #555;
-  cursor: pointer;
-}
-.voice-picker:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .regen-btn {
   font-size: 12px;

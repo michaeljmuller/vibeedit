@@ -15,7 +15,7 @@ Prerequisites
 
 - Docker (dev) or rootless Podman (prod). Nothing else on the host.
 - A Mac, once, to copy the dictionary files.
-- API keys for OpenAI and Anthropic.
+- API keys for Anthropic and ElevenLabs.
 - A Google Cloud project with OAuth 2.0 credentials (see below).
 
 
