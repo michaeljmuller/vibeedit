@@ -24,3 +24,6 @@
  - give it a proper favico
  - why isn't ecrã found in the dictionary?  i see it when i look up "screen".
  - dictionary seems to have regressed; can't find aregar either. but i CAN find arejar.
+ - dictionary again: can't find ecrã
+ - use ElevenLabs for TTS
+ 
