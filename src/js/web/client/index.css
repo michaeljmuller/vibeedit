@@ -659,6 +659,7 @@ h1 {
   white-space: nowrap;
 }
 .speak-skip:hover { background: #1557b0; }
+.speak-download { text-decoration: none; }
 
 .speak-progress {
   flex: 1;
