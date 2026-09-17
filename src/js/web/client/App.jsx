@@ -176,6 +176,7 @@ function SpeakPanel({ getEditorText, active }) {
     <div className="panel-bar speak-panel">
       <div className="speak-controls-row">
         <button className="regen-btn" onClick={generate} disabled={loading}>↺ Re-generate</button>
+        {audioUrl && <a className="regen-btn speak-download" href={audioUrl} download="vibeedit-speech.mp3">⬇ Download MP3</a>}
       </div>
       {loading && <p className="speak-status">Generating audio…</p>}
       {error && <p className="speak-status error">{error}</p>}
@@ -201,7 +202,6 @@ function SpeakPanel({ getEditorText, active }) {
               onChange={e => { audioRef.current.currentTime = e.target.value }}
             />
             <span className="speak-time">{fmt(currentTime)} / {fmt(duration)}</span>
-            <a className="speak-skip speak-download" href={audioUrl} download="vibeedit-speech.mp3" title="Download MP3">⬇ MP3</a>
           </div>
         </>
       )}

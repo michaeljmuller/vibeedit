@@ -617,6 +617,7 @@ h1 {
 }
 .regen-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .regen-btn:hover:not(:disabled) { background: #1557b0; }
+.speak-download { text-decoration: none; }
 
 .speak-status {
   font-size: 13px;
@@ -659,7 +660,6 @@ h1 {
   white-space: nowrap;
 }
 .speak-skip:hover { background: #1557b0; }
-.speak-download { text-decoration: none; }
 
 .speak-progress {
   flex: 1;
