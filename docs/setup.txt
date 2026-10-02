@@ -5,7 +5,7 @@ Layout
 ------
 
 src/js/web/         Express server + Vite/React client (the only component)
-src/docker/         docker-compose.yml, .env, web/Dockerfile
+src/docker/         docker-compose.yml, .env, web/Dockerfile, conjugation/Dockerfile
 config/             allowed-emails.txt (gitignored, mounted read-only)
 data/               Apple Dictionary files (gitignored, mounted read-only)
 util/               helper scripts
@@ -73,6 +73,11 @@ https://edit.themullers.org/auth/google/callback.
     cd src/docker
     docker compose build
     docker compose up -d
+
+The stack is two containers: the app, and "conjugation" (verb lookup; its image installs
+the conjugation library from GitHub, see src/js/web/README.md). Only the app publishes a
+port. update.sh rebuilds the conjugation image when the library has new commits; a plain
+"docker compose build" reuses the cached one.
 
 The app listens on host port 3000. GET /healthz is the healthcheck, and the
 running commit is shown at the bottom of the user menu (also GET /api/version).

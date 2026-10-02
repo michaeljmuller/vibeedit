@@ -334,11 +334,12 @@ app.post('/api/conjugate', async (req, res) => {
   const scraper = languageScrapers[lang]
   if (!scraper) return res.status(400).json({ error: `Unsupported language: ${lang}` })
   try {
-    const sections = await scraper(verb)
+    const sections = await scraper(verb, lang)
     res.json({ sections })
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: err.message })
+    // A verb that is not found or is not a verb is the user's answer, not a fault.
+    if (!err.status || err.status >= 500) console.error(err)
+    res.status(err.status || 500).json({ error: err.message })
   }
 })
 

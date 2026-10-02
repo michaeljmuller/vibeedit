@@ -151,45 +151,4 @@ export function lookup(word) {
   return results
 }
 
-// ── Reverso conjugation scraper ───────────────────────────────────────────────
-
-function scrapeConjugations($) {
-  const moodMap = new Map()
-
-  $('.blue-box-wrap').each(function () {
-    const mobileTitle = $(this).attr('mobile-title') || ''
-    const spaceIdx = mobileTitle.indexOf(' ')
-    const mood = spaceIdx >= 0 ? mobileTitle.substring(0, spaceIdx) : mobileTitle
-    if (!mood) return
-
-    const tenseName = $(this).find('p').first().text().trim() || mobileTitle
-    const rows = []
-
-    $(this).find('ul.wrap-verbs-listing li').each(function () {
-      const particle = $(this).find('i.particletxt').text().trim()
-      const pronoun = (particle ? particle + ' ' : '') + $(this).find('i.graytxt').text().trim()
-      const aux = $(this).find('i.auxgraytxt').text().trim()
-      const verbForm = $(this).find('i.verbtxt').text().trim()
-      const form = aux ? aux + ' ' + verbForm : verbForm
-      if (form) rows.push([{ pronoun, stem: form, suffix: '', className: '' }])
-    })
-
-    if (!rows.length) return
-
-    if (!moodMap.has(mood)) moodMap.set(mood, { heading: mood, tenses: [] })
-    moodMap.get(mood).tenses.push({ name: tenseName, rows })
-  })
-
-  return [...moodMap.values()]
-}
-
-export async function scrape(verb) {
-  const url = `https://conjugator.reverso.net/conjugation-italian-verb-${encodeURIComponent(verb.trim())}.html`
-  const response = await fetch(url)
-  if (!response.ok) throw new Error(`Failed to fetch: ${response.status}`)
-  const html = await response.text()
-  const $ = cheerio.load(html)
-  const sections = scrapeConjugations($)
-  if (!sections.length) throw new Error('No conjugation data found')
-  return sections
-}
+export { conjugateIt as scrape } from './conjugation.js'

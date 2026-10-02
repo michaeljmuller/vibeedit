@@ -29,6 +29,12 @@ services:
       # Bypasses Google and signs everyone in as this address. Never set in prod.
       _SINGLE_USER_EMAIL: ${_SINGLE_USER_EMAIL:-}
       DICT_DIR: /data
+      # The companion container below. Not a secret and not in .env: it only
+      # changes if the service is renamed.
+      CONJUGATION_URL: http://conjugation:8000
+    depends_on:
+      conjugation:
+        condition: service_healthy
     volumes:
       # Both read-only: the app never writes to them. The dictionaries are
       # copied from a Mac (util/setup-dictionaries.sh) and are not redistributable,
@@ -37,6 +43,24 @@ services:
       - ../../data:/data:ro
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Verb conjugation lookup: the conjugate-api library behind its HTTP wrapper.
+  # The library is Python and this app is Node, so it runs beside the app rather
+  # than inside its image (the library's docs/design.txt has the reasoning).
+  # It belongs to this stack only: no host port, no sign-in, no state.
+  conjugation:
+    build:
+      context: ./conjugation
+      args:
+        # The library's commit, set by update.sh so that a new one rebuilds the
+        # image. Unset, the head of main is used and the cached layer is reused.
+        LIB_REV: ${LIB_REV:-main}
+    restart: ${RESTART_POLICY:-unless-stopped}
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')\""]
       interval: 10s
       timeout: 5s
       retries: 5

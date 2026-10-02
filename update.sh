@@ -11,5 +11,10 @@ cd "$(dirname "$0")/src/docker"
 
 podman compose down
 git pull
+# The conjugation library is installed from the head of its main branch. Its
+# current commit goes to the build so the layer that installs it is rebuilt
+# when the library has moved, and reused when it has not.
+LIB_REV=$(git ls-remote https://github.com/michaeljmuller/conjugate-lib.git refs/heads/main | cut -f1)
+export LIB_REV
 podman compose build
 podman compose up -d

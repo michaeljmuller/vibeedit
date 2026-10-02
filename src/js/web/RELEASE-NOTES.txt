@@ -1,3 +1,22 @@
+OCTOBER 2, 2026
+---------------
+
+Bugs fixed:
+- Conjugate: Portuguese lookups were failing because the site they came from
+  (pt.conjugateverb.com) is down. Portuguese now comes from cplp.org, the
+  vocabulary the Acordo Ortográfico mandates
+- Conjugate: the personal infinitive no longer appears under the conditional
+- Conjugate: a verb that is not found, or a word that is not a verb, now says
+  so instead of showing a fetch error
+
+Changes:
+- Conjugate: European Portuguese shows "falámos" in the preterite and
+  Brazilian Portuguese "falamos"; previously both showed the same table
+- Conjugate: alternative forms are shown together (oiço / ouço), and the short
+  participle is listed when a verb has one (aceitado; aceite / aceito)
+- Conjugation lookup moved out of this app into the conjugate-api library,
+  which runs as a second container in the stack
+
 MAY 21, 2026
 ------------
 
