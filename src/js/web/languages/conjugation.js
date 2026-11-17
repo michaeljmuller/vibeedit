@@ -28,9 +28,23 @@ async function fetchVerb(lang, verb) {
   return body
 }
 
+// The panel lays each tense out as a two-column grid, singular on the left and
+// plural on the right, so rows are [singular, plural] pairs. A missing person
+// (the imperative has no 1st-person singular) keeps its place as a blank cell.
+const BLANK = { pronoun: '', pronounAfter: '', stem: '', suffix: '', className: '' }
+
+function pairRows(singular, plural) {
+  const rows = []
+  for (let i = 0; i < Math.max(singular.length, plural.length); i++) {
+    rows.push([singular[i] ?? BLANK, plural[i] ?? BLANK])
+  }
+  return rows
+}
+
 // ── Portuguese ────────────────────────────────────────────────────────────────
 
-const PT_PERSONS = ['eu', 'tu', 'ele', 'nos', 'vos', 'eles']
+const PT_SINGULAR = ['eu', 'tu', 'ele']
+const PT_PLURAL = ['nos', 'vos', 'eles']
 const PT_PRONOUNS = { eu: 'eu', tu: 'tu', ele: 'ele/ela', nos: 'nós', vos: 'vós', eles: 'eles/elas' }
 // The imperative addresses its subject: the 3rd-person rows are você/vocês.
 const PT_IMPERATIVE = { tu: 'tu', ele: 'você', nos: 'nós', vos: 'vós', eles: 'vocês' }
@@ -94,15 +108,15 @@ function ptSections(lang, data) {
   for (const { heading, tenses } of ptLayout(lang)) {
     const out = []
     for (const { key, name, before = '', after = false, onInfinitive = false } of tenses) {
-      const rows = []
-      for (const person of PT_PERSONS) {
+      const cell = person => {
         const forms = cells.get(`${key}|${person}`)
-        if (!forms) continue
+        if (!forms) return BLANK
         const label = after ? PT_IMPERATIVE[person] : PT_PRONOUNS[person]
         const pronoun = after ? before : [before, label].filter(Boolean).join(' ')
-        rows.push([ptCell(data.infinitive, forms, pronoun, after ? label : '', onInfinitive)])
+        return ptCell(data.infinitive, forms, pronoun, after ? label : '', onInfinitive)
       }
-      if (rows.length) out.push({ name, rows })
+      if (![...PT_SINGULAR, ...PT_PLURAL].some(p => cells.has(`${key}|${p}`))) continue
+      out.push({ name, rows: pairRows(PT_SINGULAR.map(cell), PT_PLURAL.map(cell)) })
     }
     if (out.length) sections.push({ heading, tenses: out })
   }
@@ -134,6 +148,27 @@ export async function conjugatePt(verb, lang) {
 
 // ── Italian ───────────────────────────────────────────────────────────────────
 
+const IT_PLURAL = new Set(['noi', 'voi', 'loro'])
+
+// Compound tenses list lui and lei apart and loro twice (stati / state), so the
+// split goes by pronoun, not position. The imperative prints no pronouns: its
+// five forms run tu, lei, noi, voi, loro. Forms with no person (gerundio passato
+// stato, stata, stati, state) list the singulars first.
+function itRows(mood, rows, cells) {
+  if (rows.some(row => row.pronoun)) {
+    return pairRows(
+      cells.filter((_, i) => !IT_PLURAL.has(rows[i].pronoun)),
+      cells.filter((_, i) => IT_PLURAL.has(rows[i].pronoun)),
+    )
+  }
+  if (mood === 'Imperativo' && cells.length === 5) {
+    return pairRows([BLANK, ...cells.slice(0, 2)], cells.slice(2))
+  }
+  if (cells.length === 1) return [cells]
+  const half = Math.ceil(cells.length / 2)
+  return pairRows(cells.slice(0, half), cells.slice(half))
+}
+
 // Shown from the blocks as the source prints them, not from the keyed cells:
 // the cells leave out the compound tenses (see the library's docs/design.txt).
 export async function conjugateIt(verb) {
@@ -145,12 +180,13 @@ export async function conjugateIt(verb) {
     const space = block.title.indexOf(' ')
     const mood = space >= 0 ? block.title.substring(0, space) : block.title
     const name = space >= 0 ? block.title.substring(space + 1) : block.title
-    const rows = block.rows.map(row => [{
+    const cells = block.rows.map(row => ({
       pronoun: [row.particle, row.pronoun].filter(Boolean).join(' '),
       stem: [row.auxiliary, row.form].filter(Boolean).join(' '),
       suffix: '',
       className: '',
-    }])
+    }))
+    const rows = itRows(mood, block.rows, cells)
     if (!moods.has(mood)) moods.set(mood, { heading: mood, tenses: [] })
     moods.get(mood).tenses.push({ name, rows })
   }
